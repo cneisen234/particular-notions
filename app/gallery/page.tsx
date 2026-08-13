@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import Zoom from '@/components/Zoom';
 
 const gallery = [
   { img: '/display-stand.webp', alt: 'A stand of handmade charm clips on kraft cards' },
@@ -39,9 +40,11 @@ export default function Gallery() {
         <div className="container mx-auto max-w-6xl">
           <div className="columns-2 md:columns-3 lg:columns-4 gap-5 [column-fill:_balance]">
             {gallery.map((g) => (
-              <div
+              <Zoom
                 key={g.img}
-                className="mb-5 break-inside-avoid overflow-hidden rounded-2xl shadow-sm transition-all duration-300 hover:shadow-lg"
+                src={g.img}
+                alt={g.alt}
+                className="group mb-5 block break-inside-avoid overflow-hidden rounded-2xl shadow-sm transition-all duration-300 hover:shadow-lg"
                 style={{ backgroundColor: 'var(--cream)' }}
               >
                 <Image
@@ -49,10 +52,10 @@ export default function Gallery() {
                   alt={g.alt}
                   width={500}
                   height={640}
-                  className="w-full h-auto object-cover transition-transform duration-500 hover:scale-105"
+                  className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
-              </div>
+              </Zoom>
             ))}
           </div>
         </div>

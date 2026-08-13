@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import EmailAddress from '@/components/EmailAddress';
+import Zoom from '@/components/Zoom';
 
 type Piece = { img: string; name: string };
 
@@ -98,18 +99,20 @@ export default function Shop() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {s.pieces.map((p) => (
                 <figure key={p.img} className="group">
-                  <div
-                    className="relative aspect-square overflow-hidden rounded-2xl shadow-sm transition-all duration-300 group-hover:shadow-lg"
+                  <Zoom
+                    src={p.img}
+                    alt={p.name || s.title}
+                    className="relative block aspect-square overflow-hidden rounded-2xl shadow-sm transition-all duration-300 group-hover:shadow-lg"
                     style={{ backgroundColor: 'var(--cream)' }}
                   >
                     <Image
                       src={p.img}
-                      alt={p.name}
+                      alt={p.name || s.title}
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(max-width: 768px) 50vw, 33vw"
                     />
-                  </div>
+                  </Zoom>
                   <figcaption className="mt-3 text-sm text-center" style={{ color: 'var(--text-light)' }}>
                     {p.name}
                   </figcaption>

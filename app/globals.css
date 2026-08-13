@@ -125,6 +125,13 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 0.5rem;
 }
 
+/* Lightbox overlay fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.lightbox-in { animation: fadeIn 0.2s ease both; }
+
 /* Staggered link entrance for the full-screen nav overlay */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(18px); }

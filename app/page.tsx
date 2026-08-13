@@ -38,7 +38,8 @@ export default function Home() {
                 alt="Particular Notions"
                 width={440}
                 height={340}
-                className="w-full max-w-sm h-auto"
+                className="max-w-sm"
+                style={{ width: '100%', height: 'auto' }}
                 priority
               />
             </div>
@@ -145,7 +146,7 @@ export default function Home() {
                 className="group flex gap-5 items-center bg-white rounded-2xl p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
               >
                 <div className="relative w-28 h-28 flex-shrink-0 overflow-hidden rounded-xl" style={{ backgroundColor: 'var(--cream)' }}>
-                  <Image src={c.img} alt={c.title} fill className="object-cover" />
+                  <Image src={c.img} alt={c.title} fill className="object-cover" sizes="112px" />
                 </div>
                 <div>
                   <h3 className="text-2xl mb-1" style={{ color: 'var(--charcoal)' }}>{c.title}</h3>

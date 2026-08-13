@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import Zoom from '@/components/Zoom';
 
 export default function About() {
   return (
@@ -34,25 +35,29 @@ export default function About() {
               </div>
             </div>
             <div className="order-1 md:order-2 flex justify-center">
-              <Image
-                src="/megan.webp"
-                alt="Megan, maker of Particular Notions"
-                width={460}
-                height={560}
-                className="rounded-2xl shadow-xl w-full max-w-sm h-auto object-cover"
-              />
+              <Zoom src="/megan.webp" alt="Megan, maker of Particular Notions" className="block w-full max-w-sm">
+                <Image
+                  src="/megan.webp"
+                  alt="Megan, maker of Particular Notions"
+                  width={460}
+                  height={560}
+                  className="rounded-2xl shadow-xl w-full h-auto object-cover"
+                />
+              </Zoom>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="flex justify-center">
-              <Image
-                src="/display-stand.webp"
-                alt="A display of handmade Particular Notions charms"
-                width={460}
-                height={560}
-                className="rounded-2xl shadow-xl w-full max-w-sm h-auto object-cover"
-              />
+              <Zoom src="/display-stand.webp" alt="A display of handmade Particular Notions charms" className="block w-full max-w-sm">
+                <Image
+                  src="/display-stand.webp"
+                  alt="A display of handmade Particular Notions charms"
+                  width={460}
+                  height={560}
+                  className="rounded-2xl shadow-xl w-full h-auto object-cover"
+                />
+              </Zoom>
             </div>
             <div>
               <h2 className="text-3xl mb-6" style={{ color: 'var(--charcoal)' }}>

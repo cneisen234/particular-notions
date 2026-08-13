@@ -56,7 +56,7 @@ export default function Navigation() {
                 width={52}
                 height={52}
                 className="rounded-full object-cover"
-                style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}
+                style={{ width: 52, height: 52, boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}
                 priority
               />
               <span
