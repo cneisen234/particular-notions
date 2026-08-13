@@ -1,26 +1,154 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Particular Notions brand colors, pulled from the logos */
+  --sage: #9cb5a3;          /* the fox / sprig sage */
+  --sage-deep: #6f8c78;     /* darker sage for text + accents */
+  --sage-soft: #cddccf;     /* pale sage wash */
+  --gold: #cba96a;          /* the oval gold */
+  --gold-deep: #b8945a;     /* richer gold for hovers */
+  --gold-soft: #e7d6ad;     /* pale gold wash */
+  --cream: #f8f4eb;         /* warm cream background */
+  --white: #ffffff;
+  --charcoal: #403a32;      /* warm charcoal text */
+  --text-light: #7c7367;    /* muted body text */
+  --border: #e8e0d1;
+
+  /* Semantic tokens */
+  --color-primary: var(--sage-deep);
+  --color-accent: var(--gold);
+  --color-background: var(--cream);
+  --color-surface: var(--white);
+  --color-text: var(--charcoal);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--cream);
+  --color-foreground: var(--charcoal);
+  /* next/font variables, wired up in layout.tsx */
+  --font-serif: var(--font-cormorant);
+  --font-rounded: var(--font-quicksand);
+  --font-body: var(--font-nunito);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--cream);
+  color: var(--charcoal);
+  font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-cormorant), Georgia, serif;
+  color: var(--charcoal);
+  letter-spacing: 0.01em;
+}
+
+/* Rounded display face for the brand name + eyebrow labels */
+.font-brand {
+  font-family: var(--font-quicksand), ui-sans-serif, sans-serif;
+}
+
+/* Small caps eyebrow label above section headings */
+.eyebrow {
+  font-family: var(--font-quicksand), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--sage-deep);
+}
+
+.section-padding {
+  padding: 6rem 1rem;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 4rem 1rem;
+  }
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--sage-deep);
+  color: white;
+  padding: 0.9rem 2.25rem;
+  border-radius: 9999px;
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.3s ease;
+  display: inline-block;
+  box-shadow: 0 2px 10px rgba(111, 140, 120, 0.25);
+}
+.btn-primary:hover {
+  background-color: #5f7a67;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(111, 140, 120, 0.35);
+}
+
+.btn-gold {
+  background-color: var(--gold);
+  color: white;
+  padding: 0.9rem 2.25rem;
+  border-radius: 9999px;
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.3s ease;
+  display: inline-block;
+  box-shadow: 0 2px 10px rgba(203, 169, 106, 0.3);
+}
+.btn-gold:hover {
+  background-color: var(--gold-deep);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(203, 169, 106, 0.4);
+}
+
+/* A soft decorative divider (little sage diamond, like the logo sparkles) */
+.divider-sparkle {
+  width: 6rem;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  position: relative;
+}
+.divider-sparkle::after {
+  content: "✦";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--gold);
+  font-size: 0.85rem;
+  background: var(--cream);
+  padding: 0 0.5rem;
+}
+
+/* Staggered link entrance for the full-screen nav overlay */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up { animation: fadeInUp 0.5s ease both; }
+
+/* Hand-drawn underline that draws itself in (used on the CTA "particular?") */
+@keyframes drawUnderline {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+.underline-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: drawUnderline 0.9s ease 0.35s forwards;
+}
+
+/* Gentle fade-in used on hero content */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeUp 0.7s ease both; }
+.stagger-1 { animation-delay: 0.12s; }
+.stagger-2 { animation-delay: 0.24s; }
+.stagger-3 { animation-delay: 0.36s; }
