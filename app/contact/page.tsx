@@ -5,7 +5,7 @@ export default function Contact() {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="py-16 px-4" style={{ background: 'linear-gradient(180deg, var(--cream) 0%, #f1ede1 100%)' }}>
+      <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
           <span className="eyebrow mb-3">Say hello</span>
           <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Get in Touch</h1>

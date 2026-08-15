@@ -40,7 +40,7 @@ export default function FAQ() {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="py-16 px-4" style={{ background: 'linear-gradient(180deg, var(--cream) 0%, #f1ede1 100%)' }}>
+      <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
           <span className="eyebrow mb-3">Good to know</span>
           <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Frequently Asked Questions</h1>
@@ -85,7 +85,7 @@ export default function FAQ() {
       </section>
 
       {/* Still curious */}
-      <section className="section-padding" style={{ backgroundColor: 'var(--cream)' }}>
+      <section className="section-padding">
         <div className="container mx-auto max-w-2xl text-center flex flex-col items-center">
           <h2 className="text-4xl mb-5" style={{ color: 'var(--sage-deep)' }}>Still curious?</h2>
           <p className="text-lg mb-8" style={{ color: 'var(--text-light)' }}>

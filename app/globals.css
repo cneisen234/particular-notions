@@ -32,7 +32,16 @@
 }
 
 body {
-  background: var(--cream);
+  background-color: var(--cream);
+  /* Decorative sprig-and-star pattern, softened by a translucent cream wash so it
+     stays subtle. Scrolls with the page (default attachment) and tiles down the
+     full document height. */
+  background-image:
+    linear-gradient(rgba(248, 244, 235, 0.70), rgba(248, 244, 235, 0.86)),
+    url('/background_graphic.png');
+  background-repeat: repeat;
+  background-size: 100% 100%, 760px auto;
+  background-position: top left, top center;
   color: var(--charcoal);
   font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;

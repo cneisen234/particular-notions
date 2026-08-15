@@ -6,7 +6,7 @@ export default function About() {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="py-16 px-4" style={{ background: 'linear-gradient(180deg, var(--cream) 0%, #f1ede1 100%)' }}>
+      <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
           <span className="eyebrow mb-3">The maker</span>
           <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Meet Megan</h1>
@@ -37,7 +37,7 @@ export default function About() {
             <div className="order-1 md:order-2 flex justify-center">
               <Zoom src="/megan.webp" alt="Megan, maker of Particular Notions" className="block w-full max-w-sm">
                 <Image
-                  src="/megan.webp"
+                  src="/megan.png"
                   alt="Megan, maker of Particular Notions"
                   width={460}
                   height={560}
@@ -49,9 +49,9 @@ export default function About() {
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="flex justify-center">
-              <Zoom src="/display-stand.webp" alt="A display of handmade Particular Notions charms" className="block w-full max-w-sm">
+              <Zoom src="/display-stand.png" alt="A display of handmade Particular Notions charms" className="block w-full max-w-sm">
                 <Image
-                  src="/display-stand.webp"
+                  src="/display-stand.png"
                   alt="A display of handmade Particular Notions charms"
                   width={460}
                   height={560}

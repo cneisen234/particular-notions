@@ -5,19 +5,19 @@ const collections = [
   {
     title: 'Word Charms',
     blurb: 'Clip and carry your little inspirations around with you.',
-    img: '/word-charms.jpg',
+    img: '/word-charms.png',
     href: '/shop#word-charms',
   },
   {
     title: 'Charm Clips',
     blurb: 'Quality beads on a clasp ready for your keys, bag, or zipper.',
-    img: '/charm-tassel-pink.jpg',
+    img: '/charm-tassel-pink.png',
     href: '/shop#charm-clips',
   },
   {
     title: 'Key Chains',
     blurb: 'A playful, whimsical, and elegant addition to your keys',
-    img: '/charm-butterfly.webp',
+    img: '/charm-jade.png',
     href: '/shop#key-chains',
   },
 ];
@@ -28,7 +28,6 @@ export default function Home() {
       {/* Hero */}
       <section
         className="relative py-20 px-4"
-        style={{ background: 'linear-gradient(180deg, var(--cream) 0%, #f1ede1 100%)' }}
       >
         <div className="container mx-auto max-w-4xl text-center">
           <div className="mb-8 fade-in flex justify-center">
@@ -55,7 +54,7 @@ export default function Home() {
             style={{ color: 'var(--text-light)' }}
           >
             Handmade beaded charms and keychains,<br /> each one
-            made by hand and meant to be carried every day.
+            made with care and meant to be carried every day.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center fade-in stagger-3">
             <Link href="/shop" className="btn-primary">View Collections</Link>
@@ -130,7 +129,7 @@ export default function Home() {
       </section>
 
       {/* Collections preview */}
-      <section className="section-padding" style={{ backgroundColor: 'var(--cream)' }}>
+      <section className="section-padding">
         <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-12 flex flex-col items-center">
             <span className="eyebrow mb-3">Browse</span>

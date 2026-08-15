@@ -19,7 +19,7 @@ const sections: {
     intro:
       'Beaded charms that spell out the little words worth keeping close. A simple, meaningful piece to clip where you’ll see it every day.',
     pieces: [
-      { img: '/word-charms-wall.jpg', name: '' },
+      { img: '/word-charms-wall.png', name: '' },
     ],
   },
   {
@@ -29,10 +29,10 @@ const sections: {
     intro:
       'Stone, glass, wood or metal, each beaded combination is unique. Clip one to your keys, a purse, a zipper, whatever you want to!',
     pieces: [
-      { img: '/charm-agate.jpg', name: '' },
-      { img: '/charm-disc.jpg', name: '' },
-      { img: '/charm-wood.jpg', name: '' },
-      { img: '/charm-tassel-pink.jpg', name: '' },
+      { img: '/charm-agate.png', name: '' },
+      { img: '/charm-disc.png', name: '' },
+      { img: '/charm-wood.png', name: '' },
+      { img: '/charm-tassel-pink.png', name: '' },
     ],
   },
   {
@@ -42,10 +42,10 @@ const sections: {
     intro:
       'Add a little swagger to your keys! Playful, colorful, and impossible to lose in the bottom of a bag.',
     pieces: [
-      { img: '/charm-butterfly.webp', name: '' },
-      { img: '/charm-white-green.webp', name: '' },
-      { img: '/charm-fish.webp', name: '' },
-      { img: '/charm-floral.webp', name: '' },
+      { img: '/charm-jade.png', name: '' },
+      { img: '/charm-white-green.png', name: '' },
+      { img: '/charm-fish.png', name: '' },
+      { img: '/charm-floral.png', name: '' },
     ],
   },
 ];
@@ -54,7 +54,7 @@ export default function Shop() {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="py-16 px-4" style={{ background: 'linear-gradient(180deg, var(--cream) 0%, #f1ede1 100%)' }}>
+      <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
           <span className="eyebrow mb-3">The collections</span>
           <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>View Collections</h1>
@@ -88,7 +88,7 @@ export default function Shop() {
           key={s.id}
           id={s.id}
           className="section-padding scroll-mt-24"
-          style={{ backgroundColor: i % 2 === 0 ? 'var(--white)' : 'var(--cream)' }}
+          style={{ backgroundColor: i % 2 === 0 ? 'var(--white)' : 'transparent' }}
         >
           <div className="container mx-auto max-w-5xl">
             <div className="max-w-2xl mb-10">

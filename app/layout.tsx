@@ -24,7 +24,7 @@ const nunito = Nunito_Sans({
 export const metadata: Metadata = {
   title: "Particular Notions — Handmade Charms & Keychains by Megan",
   description:
-    "Particular Notions is a collection of handmade beaded charms, keychains, and little treasures — each one made by hand by Megan. Uniquely creative, individually expressive.",
+    "Particular Notions is a collection of handmade beaded charms, keychains, and little treasures — each one made with care by Megan. Uniquely creative, individually expressive.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

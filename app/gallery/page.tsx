@@ -3,26 +3,27 @@ import Link from 'next/link';
 import Zoom from '@/components/Zoom';
 
 const gallery = [
-  { img: '/display-stand.webp', alt: 'A stand of handmade charm clips on kraft cards' },
-  { img: '/word-charms.jpg', alt: 'Word charms spelling LOVE, JOY, PEACE, HOPE and PRAY' },
-  { img: '/charm-agate.jpg', alt: 'Frosted agate bead charm with a gold leaf' },
-  { img: '/charm-tassel-blue.jpg', alt: 'Sky-blue tassel charm with a pearl drop' },
-  { img: '/display-tree.jpg', alt: 'A gold display tree hung with beaded charms' },
-  { img: '/charm-disc.jpg', alt: 'Charm of stacked slate discs with red accents' },
-  { img: '/charm-butterfly.webp', alt: 'Mint glass charm with a gilded butterfly' },
-  { img: '/word-charms-wall.jpg', alt: 'A wall display of word charms' },
-  { img: '/charm-wood.jpg', alt: 'Peach wood bead charm with knotted cord' },
-  { img: '/charm-floral.webp', alt: 'Frosted floral bead charm with a pink tassel' },
-  { img: '/charm-white-green.webp', alt: 'White swirl bead charm with a green tassel' },
-  { img: '/charm-tassel-pink.jpg', alt: 'Rose tassel charm with a gilded bead' },
-  { img: '/charm-fish.webp', alt: 'Playful little fish-in-a-bag charm' },
+  { img: '/display-stand.png', alt: 'A stand of handmade charm clips on kraft cards' },
+  { img: '/word-charms.png', alt: 'Word charms spelling LOVE, JOY, PEACE, HOPE and PRAY' },
+  { img: '/charm-agate.png', alt: 'Frosted agate bead charm with a gold leaf' },
+  { img: '/charm-tassel-blue.png', alt: 'Sky-blue tassel charm with a pearl drop' },
+  { img: '/display-tree.png', alt: 'A gold display tree hung with beaded charms' },
+  { img: '/charm-disc.png', alt: 'Charm of stacked slate discs with red accents' },
+  { img: '/charm-jade.png', alt: 'Mint glass jade charm' },
+  { img: '/word-charms-wall.png', alt: 'A wall display of word charms' },
+  { img: '/charm-yellow.png', alt: 'Pearl with yellow accent beads' },
+  { img: '/charm-wood.png', alt: 'Peach wood bead charm with knotted cord' },
+  { img: '/charm-floral.png', alt: 'Frosted floral bead charm with a pink tassel' },
+  { img: '/charm-white-green.png', alt: 'White swirl bead charm with a green tassel' },
+  { img: '/charm-tassel-pink.png', alt: 'Rose tassel charm with a gilded bead' },
+  { img: '/charm-fish.png', alt: 'Playful little fish-in-a-bag charm' },
 ];
 
 export default function Gallery() {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="py-16 px-4" style={{ background: 'linear-gradient(180deg, var(--cream) 0%, #f1ede1 100%)' }}>
+      <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
           <span className="eyebrow mb-3">A closer look</span>
           <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Gallery</h1>
@@ -62,7 +63,7 @@ export default function Gallery() {
       </section>
 
       {/* CTA */}
-      <section className="section-padding text-center" style={{ backgroundColor: 'var(--cream)' }}>
+      <section className="section-padding text-center">
         <div className="container mx-auto max-w-2xl flex flex-col items-center">
           <span className="eyebrow mb-3">See one you like?</span>
           <h2 className="text-4xl mb-5" style={{ color: 'var(--sage-deep)' }}>
