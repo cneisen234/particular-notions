@@ -35,7 +35,7 @@ export default function About() {
               </div>
             </div>
             <div className="order-1 md:order-2 flex justify-center">
-              <Zoom src="/megan.webp" alt="Megan, maker of Particular Notions" className="block w-full max-w-sm">
+              <Zoom src="/megan.png" alt="Megan, maker of Particular Notions" className="block w-full max-w-sm">
                 <Image
                   src="/megan.png"
                   alt="Megan, maker of Particular Notions"
