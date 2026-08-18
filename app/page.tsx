@@ -1,27 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-const collections = [
-  {
-    title: 'Word Charms',
-    blurb: 'Clip and carry your little inspirations around with you.',
-    img: '/word-charms.png',
-    href: '/gallery#word-charms',
-  },
-  {
-    title: 'Charm Clips',
-    blurb: 'Quality beads on a clasp ready for your keys, bag, or zipper.',
-    img: '/charm-tassel-pink.png',
-    href: '/gallery#charm-clips',
-  },
-  {
-    title: 'Key Chains',
-    blurb: 'A playful, whimsical, and elegant addition to your keys',
-    img: '/charm-jade.png',
-    href: '/gallery#key-chains',
-  },
-];
-
 export default function Home() {
   return (
     <main className="min-h-screen">

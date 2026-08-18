@@ -36,9 +36,9 @@ export default function About() {
             </div>
             <div className="order-1 md:order-2 flex justify-center">
               <PhotoFrame className="w-full max-w-sm">
-                <Zoom src="/megan.png" alt="Megan, maker of Particular Notions" className="block">
+                <Zoom src="/megan.webp" alt="Megan, maker of Particular Notions" className="block">
                   <Image
-                    src="/megan.png"
+                    src="/megan.webp"
                     alt="Megan, maker of Particular Notions"
                     width={460}
                     height={560}
@@ -52,9 +52,9 @@ export default function About() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="flex justify-center">
               <PhotoFrame className="w-full max-w-sm">
-                <Zoom src="/display-stand.png" alt="A display of handmade Particular Notions charms" className="block">
+                <Zoom src="/display-stand.webp" alt="A display of handmade Particular Notions charms" className="block">
                   <Image
-                    src="/display-stand.png"
+                    src="/display-stand.webp"
                     alt="A display of handmade Particular Notions charms"
                     width={460}
                     height={560}

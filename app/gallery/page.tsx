@@ -3,20 +3,20 @@ import EmailAddress from '@/components/EmailAddress';
 import Carousel, { type Slide } from '@/components/Carousel';
 
 const slides: Slide[] = [
-  { img: '/display-stand.png', alt: 'A stand of handmade charm clips on kraft cards' },
-  { img: '/word-charms.png', alt: 'Word charms spelling LOVE, JOY, PEACE, HOPE and PRAY' },
-  { img: '/charm-agate.png', alt: 'Frosted agate bead charm with a gold leaf' },
-  { img: '/charm-tassel-blue.png', alt: 'Sky-blue tassel charm with a pearl drop' },
-  { img: '/display-tree.png', alt: 'A gold display tree hung with beaded charms' },
-  { img: '/charm-disc.png', alt: 'Charm of stacked slate discs with red accents' },
-  { img: '/charm-jade.png', alt: 'Mint glass jade charm' },
-  { img: '/word-charms-wall.png', alt: 'A wall display of word charms' },
-  { img: '/charm-yellow.png', alt: 'Pearl with yellow accent beads' },
-  { img: '/charm-wood.png', alt: 'Peach wood bead charm with knotted cord' },
-  { img: '/charm-floral.png', alt: 'Frosted floral bead charm with a pink tassel' },
-  { img: '/charm-white-green.png', alt: 'White swirl bead charm with a green tassel' },
-  { img: '/charm-tassel-pink.png', alt: 'Rose tassel charm with a gilded bead' },
-  { img: '/charm-fish.png', alt: 'Playful little fish-in-a-bag charm' },
+  { img: '/display-stand.webp', alt: 'A stand of handmade charm clips on kraft cards' },
+  { img: '/word-charms.webp', alt: 'Word charms spelling LOVE, JOY, PEACE, HOPE and PRAY' },
+  { img: '/charm-agate.webp', alt: 'Frosted agate bead charm with a gold leaf' },
+  { img: '/charm-tassel-blue.webp', alt: 'Sky-blue tassel charm with a pearl drop' },
+  { img: '/display-tree.webp', alt: 'A gold display tree hung with beaded charms' },
+  { img: '/charm-disc.webp', alt: 'Charm of stacked slate discs with red accents' },
+  { img: '/charm-jade.webp', alt: 'Mint glass jade charm' },
+  { img: '/word-charms-wall.webp', alt: 'A wall display of word charms' },
+  { img: '/charm-yellow.webp', alt: 'Pearl with yellow accent beads' },
+  { img: '/charm-wood.webp', alt: 'Peach wood bead charm with knotted cord' },
+  { img: '/charm-floral.webp', alt: 'Frosted floral bead charm with a pink tassel' },
+  { img: '/charm-white-green.webp', alt: 'White swirl bead charm with a green tassel' },
+  { img: '/charm-tassel-pink.webp', alt: 'Rose tassel charm with a gilded bead' },
+  { img: '/charm-fish.webp', alt: 'Playful little fish-in-a-bag charm' },
 ];
 
 const categories = [
