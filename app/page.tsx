@@ -6,19 +6,19 @@ const collections = [
     title: 'Word Charms',
     blurb: 'Clip and carry your little inspirations around with you.',
     img: '/word-charms.png',
-    href: '/shop#word-charms',
+    href: '/gallery#word-charms',
   },
   {
     title: 'Charm Clips',
     blurb: 'Quality beads on a clasp ready for your keys, bag, or zipper.',
     img: '/charm-tassel-pink.png',
-    href: '/shop#charm-clips',
+    href: '/gallery#charm-clips',
   },
   {
     title: 'Key Chains',
     blurb: 'A playful, whimsical, and elegant addition to your keys',
     img: '/charm-jade.png',
-    href: '/shop#key-chains',
+    href: '/gallery#key-chains',
   },
 ];
 
@@ -57,7 +57,7 @@ export default function Home() {
             made with care and meant to be carried every day.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center fade-in stagger-3">
-            <Link href="/shop" className="btn-primary">View Collections</Link>
+            <Link href="/gallery" className="btn-primary">View Gallery</Link>
             <Link href="/contact" className="btn-gold">Contact Me</Link>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function Home() {
             {[
               {
                 title: 'One of a Kind',
-                body: 'Beads are chosen and combined by hand, so no two pieces are ever quite the same.',
+                body: '',
                 color: 'var(--sage-deep)',
                 icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -92,7 +92,7 @@ export default function Home() {
               },
               {
                 title: 'Made with Care',
-                body: 'Each charm is put together thoughtfully, from the clasp to the very last bead.',
+                body: '',
                 color: 'var(--gold)',
                 icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -100,7 +100,7 @@ export default function Home() {
               },
               {
                 title: 'Meant to be Carried',
-                body: 'Clip one to your keys, your bag, or a zipper — a small notion that travels with you.',
+                body: '',
                 color: 'var(--sage-deep)',
                 icon: (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -123,38 +123,6 @@ export default function Home() {
                 <h3 className="text-2xl mb-3" style={{ color: 'var(--charcoal)' }}>{card.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-light)' }}>{card.body}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Collections preview */}
-      <section className="section-padding">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12 flex flex-col items-center">
-            <span className="eyebrow mb-3">Browse</span>
-            <h2 className="text-4xl mb-5" style={{ color: 'var(--sage-deep)' }}>The Collections</h2>
-            <div className="divider-sparkle" />
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-8">
-            {collections.map((c) => (
-              <Link
-                key={c.title}
-                href={c.href}
-                className="group flex gap-5 items-center bg-white rounded-2xl p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-              >
-                <div className="relative w-28 h-28 flex-shrink-0 overflow-hidden rounded-xl" style={{ backgroundColor: 'var(--cream)' }}>
-                  <Image src={c.img} alt={c.title} fill className="object-cover" sizes="112px" />
-                </div>
-                <div>
-                  <h3 className="text-2xl mb-1" style={{ color: 'var(--charcoal)' }}>{c.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-light)' }}>{c.blurb}</p>
-                  <span className="font-brand text-sm mt-2 inline-block" style={{ color: 'var(--gold-deep)', fontWeight: 600 }}>
-                    View collection →
-                  </span>
-                </div>
-              </Link>
             ))}
           </div>
         </div>

@@ -7,7 +7,6 @@ export default function Contact() {
       {/* Hero */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
-          <span className="eyebrow mb-3">Say hello</span>
           <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Get in Touch</h1>
           <div className="divider-sparkle mb-6" />
           <p className="text-lg max-w-2xl" style={{ color: 'var(--text-light)' }}>
@@ -59,18 +58,18 @@ export default function Contact() {
         <div className="container mx-auto max-w-2xl flex flex-col items-center">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/shop"
+              href="/gallery"
               className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
               style={{ backgroundColor: 'white', color: 'var(--sage-deep)', fontFamily: 'var(--font-quicksand), sans-serif' }}
             >
-              View Collections
+              Browse the Gallery
             </Link>
             <Link
-              href="/gallery"
+              href="/about"
               className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
               style={{ backgroundColor: 'var(--gold)', color: 'white', fontFamily: 'var(--font-quicksand), sans-serif' }}
             >
-              Browse the Gallery
+              Meet Megan
             </Link>
           </div>
         </div>

@@ -22,7 +22,7 @@ const faqs = [
   {
     question: 'How do I get in touch?',
     answer:
-      'The best way is email — I read every message and am happy to answer questions, take orders, or chat about a custom idea. Head to the Contact page for details.',
+      'The best way is email. I read every message and am happy to answer questions, take orders, or chat about a custom idea. Head to the Contact page for details.',
   },
 ];
 
@@ -42,7 +42,6 @@ export default function FAQ() {
       {/* Hero */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
-          <span className="eyebrow mb-3">Good to know</span>
           <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Frequently Asked Questions</h1>
           <div className="divider-sparkle" />
         </div>

@@ -28,7 +28,6 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               {[
                 { href: '/about', label: 'About Me' },
-                { href: '/shop', label: 'Collections' },
                 { href: '/gallery', label: 'Gallery' },
                 { href: '/faq', label: 'FAQ' },
                 { href: '/contact', label: 'Contact & Custom Orders' },

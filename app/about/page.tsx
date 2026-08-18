@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Zoom from '@/components/Zoom';
+import PhotoFrame from '@/components/PhotoFrame';
 
 export default function About() {
   return (
@@ -8,8 +9,7 @@ export default function About() {
       {/* Hero */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
-          <span className="eyebrow mb-3">The maker</span>
-          <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Meet Megan</h1>
+          <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Meet the Designer</h1>
           <div className="divider-sparkle" />
         </div>
       </section>
@@ -35,29 +35,33 @@ export default function About() {
               </div>
             </div>
             <div className="order-1 md:order-2 flex justify-center">
-              <Zoom src="/megan.png" alt="Megan, maker of Particular Notions" className="block w-full max-w-sm">
-                <Image
-                  src="/megan.png"
-                  alt="Megan, maker of Particular Notions"
-                  width={460}
-                  height={560}
-                  className="rounded-2xl shadow-xl w-full h-auto object-cover"
-                />
-              </Zoom>
+              <PhotoFrame className="w-full max-w-sm">
+                <Zoom src="/megan.png" alt="Megan, maker of Particular Notions" className="block">
+                  <Image
+                    src="/megan.png"
+                    alt="Megan, maker of Particular Notions"
+                    width={460}
+                    height={560}
+                    className="w-full h-auto object-cover"
+                  />
+                </Zoom>
+              </PhotoFrame>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="flex justify-center">
-              <Zoom src="/display-stand.png" alt="A display of handmade Particular Notions charms" className="block w-full max-w-sm">
-                <Image
-                  src="/display-stand.png"
-                  alt="A display of handmade Particular Notions charms"
-                  width={460}
-                  height={560}
-                  className="rounded-2xl shadow-xl w-full h-auto object-cover"
-                />
-              </Zoom>
+              <PhotoFrame className="w-full max-w-sm">
+                <Zoom src="/display-stand.png" alt="A display of handmade Particular Notions charms" className="block">
+                  <Image
+                    src="/display-stand.png"
+                    alt="A display of handmade Particular Notions charms"
+                    width={460}
+                    height={560}
+                    className="w-full h-auto object-cover"
+                  />
+                </Zoom>
+              </PhotoFrame>
             </div>
             <div>
               <h2 className="text-3xl mb-6" style={{ color: 'var(--charcoal)' }}>
@@ -89,8 +93,8 @@ export default function About() {
       <section className="section-padding text-center" style={{ backgroundColor: 'var(--sage-deep)' }}>
         <div className="container mx-auto max-w-2xl">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/shop" className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1" style={{ backgroundColor: 'white', color: 'var(--sage-deep)', fontFamily: 'var(--font-quicksand), sans-serif' }}>
-              View Collections
+            <Link href="/gallery" className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1" style={{ backgroundColor: 'white', color: 'var(--sage-deep)', fontFamily: 'var(--font-quicksand), sans-serif' }}>
+              View Gallery
             </Link>
             <Link href="/contact" className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1" style={{ backgroundColor: 'var(--gold)', color: 'white', fontFamily: 'var(--font-quicksand), sans-serif' }}>
               Contact Megan

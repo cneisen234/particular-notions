@@ -9,7 +9,6 @@ import EmailAddress from './EmailAddress';
 const links = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
-  { href: '/shop', label: 'Collections' },
   { href: '/gallery', label: 'Gallery' },
   { href: '/faq', label: 'FAQ' },
 ];
