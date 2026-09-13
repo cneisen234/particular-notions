@@ -42,6 +42,28 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Sourdough store promo */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div
+            className="rounded-3xl p-10 md:p-14 text-center flex flex-col items-center bg-white shadow-sm"
+            style={{ border: '1px solid var(--border)' }}
+          >
+            <span className="eyebrow mb-3">Fresh from the kitchen</span>
+            <h2 className="text-4xl mb-5" style={{ color: 'var(--sage-deep)' }}>
+              Now taking sourdough orders
+            </h2>
+            <div className="divider-sparkle mb-6" />
+            <p className="text-lg leading-relaxed max-w-2xl mb-8" style={{ color: 'var(--text-light)' }}>
+              Naturally leavened loaves and baked goods, made fresh to order. Order today for
+              next-day pickup in Fairview or local delivery — pay by card, or cash at
+              pickup/delivery.
+            </p>
+            <Link href="/order" className="btn-primary">Order Online</Link>
+          </div>
+        </div>
+      </section>
+
       {/* Why handmade */}
       <section className="section-padding" style={{ backgroundColor: 'var(--white)' }}>
         <div className="container mx-auto max-w-4xl">

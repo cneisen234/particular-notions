@@ -115,6 +115,13 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 8px 18px rgba(203, 169, 106, 0.4);
 }
 
+/* Tailwind v4's reset drops the pointer cursor on buttons — restore it site-wide.
+   Disabled buttons keep the default arrow. */
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
 /* A soft decorative divider (little sage diamond, like the logo sparkles) */
 .divider-sparkle {
   width: 6rem;

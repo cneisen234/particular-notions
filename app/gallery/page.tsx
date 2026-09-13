@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import EmailAddress from '@/components/EmailAddress';
 import Carousel, { type Slide } from '@/components/Carousel';
 

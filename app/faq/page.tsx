@@ -15,6 +15,11 @@ const faqs = [
       'Contact me for a list of locations where my items are currently displayed. You can also reach out to me to place a custom order.',
   },
   {
+    question: 'How do I order sourdough online?',
+    answer:
+      'Head to the Order page, add what you’d like, and check out. Orders placed before the daily cutoff are ready the next day — pickup in Fairview, or local delivery to Fairview and Mio (free on orders $50 and up). Pay securely by card, or choose cash at pickup/delivery.',
+  },
+  {
     question: 'What can I clip these to?',
     answer:
       'Anywhere you’d like a little personality — keys, a purse or backpack, a zipper pull, a water bottle, a diaper bag, a lanyard. Each charm has a sturdy clasp made for everyday use.',
@@ -32,7 +37,8 @@ export default function FAQ() {
   const toggle = (index: number) => {
     setOpenItems((prev) => {
       const next = new Set(prev);
-      next.has(index) ? next.delete(index) : next.add(index);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
       return next;
     });
   };

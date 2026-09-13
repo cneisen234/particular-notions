@@ -71,7 +71,7 @@ export default function About() {
                 <p>
                   Being uniquely
                   creative and individually expressive is something worth
-                  celebrating. Each piece I make starts as a small idea, a "notion" if you will, and I am intentional about the execution.
+                  celebrating. Each piece I make starts as a small idea, a &ldquo;notion&rdquo; if you will, and I am intentional about the execution.
                 </p>
                 <p>
                   Because each one is handmade, no two are ever quite the same.
