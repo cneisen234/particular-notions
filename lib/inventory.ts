@@ -96,6 +96,7 @@ export const products: Product[] = [
     category: "scones",
     priceCents: 400,
     dailyLimit: 24,
+    imageUrl: "/store/ChocolateChipScone.webp",
   },
   {
     id: "plain-sourdough-scone",
@@ -130,6 +131,7 @@ export const products: Product[] = [
     category: "cookies",
     priceCents: 200,
     dailyLimit: 24,
+    imageUrl: "/store/ChocolateChipCookies.webp",
   },
   {
     id: "sugar-sourdough-cookies",
