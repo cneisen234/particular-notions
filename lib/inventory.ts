@@ -48,8 +48,8 @@ export const categories: Category[] = [
   },
   {
     id: "scones",
-    name: "Sourdough Scones",
-    description: "Tender, buttery scones with a gentle sourdough tang.",
+    name: "Scones",
+    description: "Tender, buttery scones.",
   },
   {
     id: "cookies",
@@ -108,11 +108,12 @@ export const products: Product[] = [
   },
   {
     id: "lemon-sourdough-scone",
-    name: "Lemon Sourdough Scone",
-    description: "Bright, zesty lemon folded into a tender sourdough scone.",
+    name: "Lemon Scone",
+    description: "Bright, zesty lemon folded into a tender scone.",
     category: "scones",
     priceCents: 400,
     dailyLimit: 24,
+    imageUrl: "/store/lemon-scone.webp",
   },
   {
     id: "cinnamon-raisin-sourdough-scone",
@@ -140,6 +141,7 @@ export const products: Product[] = [
     category: "cookies",
     priceCents: 200,
     dailyLimit: 24,
+    imageUrl: "/store/sugar-cookie.webp",
   },
   {
     id: "salted-caramel-sourdough-cookies",
