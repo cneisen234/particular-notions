@@ -122,6 +122,7 @@ export const products: Product[] = [
     category: "scones",
     priceCents: 400,
     dailyLimit: 24,
+    imageUrl: "/store/cinn-rais-scone.webp",
   },
 
   // --- Cookies ---
@@ -150,6 +151,7 @@ export const products: Product[] = [
     category: "cookies",
     priceCents: 200,
     dailyLimit: 24,
+    imageUrl: "/store/caramel-sugar.webp",
   },
   {
     id: "meringue-cookies",
