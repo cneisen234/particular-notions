@@ -12,6 +12,7 @@ import { computeOrder, type CartLine } from "@/lib/pricing";
 import {
   validateDeliveryAddress,
   fulfillmentSchedule,
+  orderLeadTimeHours,
   isFulfillmentMethodAvailable,
   isPaymentMethodAvailable,
   type FulfillmentMethod,
@@ -167,7 +168,12 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
     }
   }
 
-  const scheduleLabel = fulfillmentSchedule().label;
+  // Ready date honors the longest lead time in the cart (validated above, so
+  // every line resolves to a real product).
+  const orderedProducts = input.lines
+    .map((l) => getProduct(l.productId))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+  const scheduleLabel = fulfillmentSchedule(new Date(), orderLeadTimeHours(orderedProducts)).label;
 
   // Notifications (email) — best-effort, never throw. Order is already placed.
   await notifyNewOrder({

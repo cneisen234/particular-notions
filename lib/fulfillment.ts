@@ -3,6 +3,7 @@
 // storefront and the server checkout can use it.
 
 import { shopConfig } from "@/lib/shop-config";
+import type { Product } from "@/lib/inventory";
 
 export type FulfillmentMethod = "pickup" | "delivery";
 export type PaymentMethod = "card" | "cash";
@@ -73,6 +74,24 @@ export function validateDeliveryAddress(
   return { ok: true };
 }
 
+// ---- Lead time (advance notice) ----
+
+/** Advance notice a single product needs, falling back to the shop default. */
+export function productLeadTimeHours(p: Product): number {
+  return p.leadTimeHours ?? shopConfig.defaultLeadTimeHours;
+}
+
+/**
+ * How much notice an order needs: the longest lead time of anything in it (so a
+ * cart with one 48h item is a 48h order). Empty carts fall back to the default.
+ */
+export function orderLeadTimeHours(products: Product[]): number {
+  return products.reduce(
+    (max, p) => Math.max(max, productLeadTimeHours(p)),
+    shopConfig.defaultLeadTimeHours,
+  );
+}
+
 // ---- Next-day fulfillment scheduling ----
 
 /** Extract calendar parts + hour for `date` in the given IANA time zone. */
@@ -100,15 +119,26 @@ export type FulfillmentSchedule = {
 
 /**
  * When an order placed `now` will be fulfilled. Orders before the cutoff hour are
- * ready the next day; orders at/after the cutoff roll to the day after next. All
- * computed in the shop's configured time zone.
+ * ready the next day; orders at/after the cutoff roll to the day after next. A
+ * `leadTimeHours` above the shop default rolls the date out further — one extra
+ * day per extra 24h of notice (e.g. a 48h order lands a day later than a 24h one).
+ * All computed in the shop's configured time zone.
  */
-export function fulfillmentSchedule(now: Date = new Date()): FulfillmentSchedule {
+export function fulfillmentSchedule(
+  now: Date = new Date(),
+  leadTimeHours: number = shopConfig.defaultLeadTimeHours,
+): FulfillmentSchedule {
   const { year, month, day, hour } = localParts(now, shopConfig.timeZone);
   const afterCutoff = hour >= shopConfig.orderCutoffHour;
+  // Extra whole days an above-default lead time adds on top of the usual
+  // next-day turnaround (0 for a default-lead order).
+  const extraDays = Math.max(
+    0,
+    Math.round((leadTimeHours - shopConfig.defaultLeadTimeHours) / 24),
+  );
   // Anchor at UTC noon so adding days never trips over a DST boundary.
   const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-  date.setUTCDate(date.getUTCDate() + (afterCutoff ? 2 : 1));
+  date.setUTCDate(date.getUTCDate() + (afterCutoff ? 2 : 1) + extraDays);
   const label = new Intl.DateTimeFormat("en-US", {
     timeZone: "UTC",
     weekday: "long",

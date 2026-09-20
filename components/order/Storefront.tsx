@@ -68,7 +68,8 @@ export default function Storefront() {
           <p className="text-lg max-w-2xl" style={{ color: "var(--text-light)" }}>
             Place an order today and it&apos;s ready{" "}
             <strong suppressHydrationWarning>{schedule.label}</strong> for pickup or local
-            delivery. Pay by card, or cash at pickup/delivery.
+            delivery — sourdough loaves need an extra day. Pay by card, or cash at
+            pickup/delivery.
           </p>
         </div>
       </section>

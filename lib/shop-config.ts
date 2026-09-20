@@ -49,6 +49,13 @@ export type ShopConfig = {
   /** IANA timezone the cutoff and "next day" are computed in. */
   timeZone: string;
 
+  /**
+   * Default advance notice (hours) an order needs, unless a product overrides it
+   * with its own `leadTimeHours`. 24 = the usual next-day turnaround; a product
+   * asking for more (e.g. 48) rolls its orders out an extra day.
+   */
+  defaultLeadTimeHours: number;
+
   /** Where pickup orders are collected. Shown at checkout for pickup orders. */
   pickup: PickupLocation;
 
@@ -73,6 +80,8 @@ export const shopConfig: ShopConfig = {
 
   orderCutoffHour: 18, // 6:00 PM — later orders roll to the day after next
   timeZone: "America/Detroit", // Michigan (Eastern)
+
+  defaultLeadTimeHours: 24, // next-day turnaround for everything by default
 
   pickup: {
     label: "Pickup at our house",

@@ -35,6 +35,12 @@ export type Product = {
   dailyLimit: number;
   /** Set false to force this item OFF regardless of dailyLimit. Defaults on. */
   available?: boolean;
+  /**
+   * Advance notice this item needs, in hours. Omit to use the shop-wide default
+   * (shopConfig.defaultLeadTimeHours). An order takes the longest lead time of
+   * anything in it.
+   */
+  leadTimeHours?: number;
   /** Path to a photo under /public, e.g. "/store/classic-sourdough.webp". */
   imageUrl?: string;
 };
@@ -77,7 +83,28 @@ export const products: Product[] = [
     category: "sourdough-bread",
     priceCents: 1000,
     dailyLimit: 4,
+    leadTimeHours: 48, // needs 2 days' notice, not the usual 1
     imageUrl: "/store/sourdoughbread.webp",
+  },
+  {
+    id: "jalapeno-cheddar-sourdough-sandwich-bread",
+    name: "Jalapeño Cheddar Sourdough Sandwich Bread",
+    description: "A soft-crumb sourdough loaf with sharp cheddar and a kick of jalapeño.",
+    category: "sourdough-bread",
+    priceCents: 1200,
+    dailyLimit: 4,
+    leadTimeHours: 48, // needs 2 days' notice, not the usual 1
+    // No photo yet — shows the bread-icon placeholder until one is added.
+  },
+  {
+    id: "garden-herb-sourdough-sandwich-bread",
+    name: "Garden Herb Sourdough Sandwich Bread",
+    description: "A soft-crumb sourdough loaf baked with a blend of fresh garden herbs.",
+    category: "sourdough-bread",
+    priceCents: 1200,
+    dailyLimit: 4,
+    leadTimeHours: 48, // needs 2 days' notice, not the usual 1
+    // No photo yet — shows the bread-icon placeholder until one is added.
   },
 
   // --- Sourdough Scones ---
@@ -155,8 +182,8 @@ export const products: Product[] = [
   },
   {
     id: "meringue-cookies",
-    name: "Meringue Cookies (4-Pack)",
-    description: "Four light, airy meringue cookies that melt in your mouth.",
+    name: "Meringue Cookies (6-Pack)",
+    description: "Six light, airy meringue cookies that melt in your mouth.",
     category: "cookies",
     priceCents: 200,
     dailyLimit: 4,

@@ -17,6 +17,7 @@ import {
   availableFulfillmentMethods,
   availablePaymentMethods,
   fulfillmentSchedule,
+  orderLeadTimeHours,
   validateDeliveryAddress,
   type FulfillmentMethod,
   type PaymentMethod,
@@ -127,7 +128,10 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
     [enriched],
   );
   const totals = useMemo(() => computeOrder(lines, method, payment), [lines, method, payment]);
-  const schedule = useMemo(() => fulfillmentSchedule(), []);
+  const schedule = useMemo(
+    () => fulfillmentSchedule(new Date(), orderLeadTimeHours(enriched.map((i) => i.product))),
+    [enriched],
+  );
 
   const freeDelivery = totals.subtotalCents >= shopConfig.freeDeliveryThresholdCents;
   const remainingForFree = shopConfig.freeDeliveryThresholdCents - totals.subtotalCents;
