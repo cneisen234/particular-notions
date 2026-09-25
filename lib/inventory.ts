@@ -104,7 +104,7 @@ export const products: Product[] = [
     priceCents: 1200,
     dailyLimit: 4,
     leadTimeHours: 48, // needs 2 days' notice, not the usual 1
-    // No photo yet — shows the bread-icon placeholder until one is added.
+    imageUrl: "/store/Italian-herb.webp",
   },
 
   // --- Sourdough Scones ---

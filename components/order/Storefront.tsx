@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { catalogByCategory } from "@/lib/inventory";
 import { shopConfig } from "@/lib/shop-config";
 import { fulfillmentSchedule } from "@/lib/fulfillment";
@@ -36,8 +37,14 @@ function FloatingCartButton() {
 
 export default function Storefront() {
   const groups = catalogByCategory();
-  // Static schedule preview for the hero; the checkout recomputes at submit time.
-  const schedule = fulfillmentSchedule();
+  // Compute the "ready" date in the browser after mount, not during render — this
+  // page is statically prerendered, so a render-time date would freeze at build
+  // time and only change on redeploy. Recomputing client-side keeps it current.
+  const [readyLabel, setReadyLabel] = useState<string | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- compute date after mount so a static build doesn't freeze it
+    setReadyLabel(fulfillmentSchedule().label);
+  }, []);
 
   if (!shopConfig.acceptingOrders) {
     return (
@@ -67,7 +74,7 @@ export default function Storefront() {
           <div className="divider-sparkle mb-6" />
           <p className="text-lg max-w-2xl" style={{ color: "var(--text-light)" }}>
             Place an order today and it&apos;s ready{" "}
-            <strong suppressHydrationWarning>{schedule.label}</strong> for pickup or local
+            <strong>{readyLabel ?? "the next day"}</strong> for pickup or local
             delivery — sourdough loaves need an extra day. Pay by card, or cash at
             pickup/delivery.
           </p>
