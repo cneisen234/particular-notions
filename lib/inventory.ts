@@ -98,8 +98,8 @@ export const products: Product[] = [
   },
   {
     id: "garden-herb-sourdough-sandwich-bread",
-    name: "Garden Herb Sourdough Sandwich Bread",
-    description: "A soft-crumb sourdough loaf baked with a blend of fresh garden herbs.",
+    name: "Italian Herb Sourdough Sandwich Bread",
+    description: "A soft-crumb sourdough loaf baked with a blend of Italian herbs.",
     category: "sourdough-bread",
     priceCents: 1200,
     dailyLimit: 4,
@@ -130,7 +130,7 @@ export const products: Product[] = [
     name: "Plain Sourdough Scone",
     description: "A classic buttery sourdough scone — simple and tender.",
     category: "scones",
-    priceCents: 400,
+    priceCents: 300,
     dailyLimit: 24,
   },
   {
