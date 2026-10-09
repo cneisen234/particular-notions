@@ -75,7 +75,7 @@ export const shopConfig: ShopConfig = {
     "Online ordering is paused right now — check back soon, or email us to ask about an order.",
 
   deliveryFeeCents: 300, // $3.00 flat, delivery only
-  freeDeliveryThresholdCents: 5000, // free delivery on subtotals >= $50
+  freeDeliveryThresholdCents: 3000, // free delivery on subtotals >= $30
   cardSurchargeBps: 300, // 3% card surcharge, waived for cash
 
   orderCutoffHour: 18, // 6:00 PM — later orders roll to the day after next
@@ -91,10 +91,12 @@ export const shopConfig: ShopConfig = {
     zip: "48621",
   },
 
+  // All of Oscoda County. Keep cities and zips in the same order — picking a
+  // town at checkout auto-selects the ZIP at the same position.
   delivery: {
     state: "MI",
-    cities: ["Fairview", "Mio"],
-    zips: ["48621", "48647"],
+    cities: ["Comins", "Fairview", "Luzerne", "Mio"],
+    zips: ["48619", "48621", "48636", "48647"],
   },
 
   payments: {

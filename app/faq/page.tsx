@@ -17,7 +17,7 @@ const faqs = [
   {
     question: 'How do I order sourdough online?',
     answer:
-      'Head to the Order page, add what you’d like, and check out. Orders placed before the daily cutoff are ready the next day — pickup in Fairview, or local delivery to Fairview and Mio (free on orders $50 and up). Pay securely by card, or choose cash at pickup/delivery.',
+      'Head to the Order page, add what you’d like, and check out. Orders placed before the daily cutoff are ready the next day — pickup in Fairview, or local delivery anywhere in Oscoda County — Comins, Fairview, Luzerne, and Mio (free on orders $30 and up). Pay securely by card, or choose cash at pickup/delivery.',
   },
   {
     question: 'What can I clip these to?',

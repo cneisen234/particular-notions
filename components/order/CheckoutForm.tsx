@@ -17,6 +17,7 @@ import {
   availableFulfillmentMethods,
   availablePaymentMethods,
   fulfillmentSchedule,
+  joinList,
   orderLeadTimeHours,
   validateDeliveryAddress,
   type FulfillmentMethod,
@@ -412,7 +413,13 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
                   </Field>
                   <div className="grid grid-cols-3 gap-3">
                     <Field label="Town" required>
-                      <select className={inputBase} style={inputStyle} value={city} onChange={(e) => setCity(e.target.value)}>
+                      <select className={inputBase} style={inputStyle} value={city}
+                        onChange={(e) => {
+                          setCity(e.target.value);
+                          const z = shopConfig.delivery.zips[e.target.selectedIndex];
+                          if (z) setZip(z);
+                        }}
+                      >
                         {shopConfig.delivery.cities.map((c) => (
                           <option key={c} value={c}>
                             {c}
@@ -434,8 +441,8 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
                     </Field>
                   </div>
                   <p className="text-xs" style={{ color: "var(--text-light)" }}>
-                    We deliver to {shopConfig.delivery.cities.join(" and ")} (ZIPs{" "}
-                    {shopConfig.delivery.zips.join(", ")}) only.
+                    We deliver anywhere in Oscoda County — {joinList(shopConfig.delivery.cities)} (ZIPs{" "}
+                    {shopConfig.delivery.zips.join(", ")}).
                   </p>
                   {deliveryError && (
                     <p className="text-sm font-semibold" style={{ color: "#b3261e" }}>

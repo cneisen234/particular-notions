@@ -5,7 +5,7 @@ import Storefront from "@/components/order/Storefront";
 export const metadata: Metadata = {
   title: "Order Online — Particular Notions",
   description:
-    "Order fresh sourdough and baked goods from Particular Notions for next-day pickup or local delivery in Fairview and Mio.",
+    "Order fresh sourdough and baked goods from Particular Notions for next-day pickup or local delivery anywhere in Oscoda County.",
 };
 
 export default function OrderPage() {

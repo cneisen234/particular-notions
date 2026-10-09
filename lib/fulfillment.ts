@@ -37,6 +37,12 @@ export type DeliveryAddressInput = {
   zip: string;
 };
 
+/** "A", "A and B", "A, B, and C" — for customer-facing lists. */
+export function joinList(items: string[]): string {
+  if (items.length <= 2) return items.join(" and ");
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
 /** First 5 digits of a ZIP (drops any +4 and stray characters). */
 function zip5(zip: string): string {
   return (zip.match(/\d/g) ?? []).join("").slice(0, 5);
@@ -62,13 +68,13 @@ export function validateDeliveryAddress(
   if (!delivery.zips.includes(zip)) {
     return {
       ok: false,
-      reason: `We deliver to ZIP codes ${delivery.zips.join(" and ")} only.`,
+      reason: `We deliver to ZIP codes ${joinList(delivery.zips)} only.`,
     };
   }
   if (!allowedCities.includes(city)) {
     return {
       ok: false,
-      reason: `We deliver to ${delivery.cities.join(" and ")} only.`,
+      reason: `We deliver to ${joinList(delivery.cities)} only.`,
     };
   }
   return { ok: true };
