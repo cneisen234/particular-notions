@@ -3,7 +3,7 @@
 
 import type { MetadataRoute } from "next";
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://particularnotions.com").replace(/\/+$/, "");
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.particularnotions.com").replace(/\/+$/, "");
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return ["/", "/about", "/gallery", "/order", "/faq", "/contact"].map((path) => ({ url: `${SITE_URL}${path}` }));
