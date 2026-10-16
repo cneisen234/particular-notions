@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { getShopConfig } from '@/lib/shop';
 
-export default function Home() {
+// The pickup town comes from the shop's settings on every visit.
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const config = await getShopConfig();
   return (
     <main className="min-h-screen">
       {/* Hero */}
@@ -56,7 +61,7 @@ export default function Home() {
             <div className="divider-sparkle mb-6" />
             <p className="text-lg leading-relaxed max-w-2xl mb-8" style={{ color: 'var(--text-light)' }}>
               Naturally leavened loaves and baked goods, made fresh to order. Order today for
-              next-day pickup in Fairview or local delivery — pay by card, or cash at
+              next-day pickup in {config.pickup.city} or local delivery — pay by card, or cash at
               pickup/delivery.
             </p>
             <Link href="/order" className="btn-primary">Order Online</Link>

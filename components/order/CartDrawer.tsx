@@ -5,7 +5,7 @@ import { formatCents } from "@/lib/money";
 import { useCart } from "./CartProvider";
 
 export default function CartDrawer() {
-  const { enriched, count, subtotalCents, setQty, remove, isOpen, closeCart } = useCart();
+  const { shop, enriched, count, subtotalCents, setQty, remove, isOpen, closeCart } = useCart();
 
   return (
     <>
@@ -64,7 +64,7 @@ export default function CartDrawer() {
           ) : (
             <ul className="space-y-4">
               {enriched.map((item) => {
-                const atLimit = item.qty >= item.product.dailyLimit;
+                const atLimit = item.qty >= item.product.remaining;
                 return (
                   <li
                     key={item.productId}
@@ -133,7 +133,7 @@ export default function CartDrawer() {
               </span>
             </div>
             <p className="text-xs mb-4" style={{ color: "var(--text-light)" }}>
-              Delivery fee and (for card) the 3% surcharge are calculated at checkout.
+              Delivery fee and (for card) the {shop.config.cardSurchargeBps / 100}% surcharge are calculated at checkout.
             </p>
             <Link
               href="/order/checkout"

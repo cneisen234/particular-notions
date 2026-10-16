@@ -2,7 +2,8 @@
 
 // Checkout form + live order summary + order placement.
 //
-// Totals are previewed with the SAME computeOrder() the server uses. On submit we
+// Totals are previewed with the SAME computeOrder() the server uses, over the
+// shop the page loaded from the database. On submit we
 // verify reCAPTCHA, tokenize the card with Square's Web Payments SDK (card only),
 // and POST to /api/order/checkout, which recomputes money server-side, charges
 // (card) and emails. Cash orders skip tokenization and the charge.
@@ -12,7 +13,6 @@ import Link from "next/link";
 import { useCart } from "./CartProvider";
 import { formatCents } from "@/lib/money";
 import { computeOrder } from "@/lib/pricing";
-import { shopConfig } from "@/lib/shop-config";
 import {
   availableFulfillmentMethods,
   availablePaymentMethods,
@@ -94,10 +94,11 @@ function Field({
 }
 
 export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
-  const { enriched, count, hydrated, clear } = useCart();
+  const { shop, enriched, count, hydrated, clear } = useCart();
+  const shopConfig = shop.config;
 
   const fulfillmentMethods = availableFulfillmentMethods();
-  const paymentMethods = availablePaymentMethods();
+  const paymentMethods = availablePaymentMethods(shopConfig);
 
   const [method, setMethod] = useState<FulfillmentMethod>(fulfillmentMethods[0] ?? "pickup");
   const [payment, setPayment] = useState<PaymentMethod>(paymentMethods[0] ?? "cash");
@@ -128,10 +129,10 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
     () => enriched.map((i) => ({ productId: i.productId, qty: i.qty })),
     [enriched],
   );
-  const totals = useMemo(() => computeOrder(lines, method, payment), [lines, method, payment]);
+  const totals = useMemo(() => computeOrder(shop, lines, method, payment), [shop, lines, method, payment]);
   const schedule = useMemo(
-    () => fulfillmentSchedule(new Date(), orderLeadTimeHours(enriched.map((i) => i.product))),
-    [enriched],
+    () => fulfillmentSchedule(shopConfig, new Date(), orderLeadTimeHours(shopConfig, enriched.map((i) => i.product))),
+    [shopConfig, enriched],
   );
 
   const freeDelivery = totals.subtotalCents >= shopConfig.freeDeliveryThresholdCents;
@@ -141,9 +142,9 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
   const deliveryError = useMemo(() => {
     if (!isDelivery) return null;
     if (!line1.trim() || !city.trim() || !zip.trim()) return null;
-    const r = validateDeliveryAddress({ city, state: shopConfig.delivery.state, zip });
+    const r = validateDeliveryAddress(shopConfig, { city, state: shopConfig.delivery.state, zip });
     return r.ok ? null : r.reason;
-  }, [isDelivery, line1, city, zip]);
+  }, [shopConfig, isDelivery, line1, city, zip]);
 
   const problems = useMemo(() => {
     const p: string[] = [];
@@ -153,13 +154,13 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
     if (isDelivery) {
       if (!line1.trim() || !city.trim() || !zip.trim())
         p.push("Please enter your full delivery address.");
-      const r = validateDeliveryAddress({ city, state: shopConfig.delivery.state, zip });
+      const r = validateDeliveryAddress(shopConfig, { city, state: shopConfig.delivery.state, zip });
       if (line1.trim() && !r.ok) p.push(r.reason);
     }
     if (isCard && !cardConfigured)
       p.push("Card payments aren't configured yet — choose cash, or add Square keys.");
     return p;
-  }, [name, email, isDelivery, line1, city, zip, isCard, cardConfigured]);
+  }, [shopConfig, name, email, isDelivery, line1, city, zip, isCard, cardConfigured]);
 
   const canSubmit = count > 0 && problems.length === 0;
 
@@ -441,7 +442,7 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
                     </Field>
                   </div>
                   <p className="text-xs" style={{ color: "var(--text-light)" }}>
-                    We deliver anywhere in Oscoda County — {joinList(shopConfig.delivery.cities)} (ZIPs{" "}
+                    We deliver to {joinList(shopConfig.delivery.cities)} (ZIPs{" "}
                     {shopConfig.delivery.zips.join(", ")}).
                   </p>
                   {deliveryError && (

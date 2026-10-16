@@ -1,47 +1,53 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
+import FaqList, { type Faq } from '@/components/FaqList';
+import { joinList } from '@/lib/fulfillment';
+import { formatCents } from '@/lib/money';
+import { getShopConfig } from '@/lib/shop';
+import type { ShopConfig } from '@/lib/shop-config';
 
-const faqs = [
-  {
-    question: 'Are these really handmade?',
-    answer:
-      'Yes — every single one. I design and assemble each charm and keychain by hand, one bead at a time. Nothing is mass-produced.',
-  },
-  {
-    question: 'Where can I buy your products?',
-    answer:
-      'Contact me for a list of locations where my items are currently displayed. You can also reach out to me to place a custom order.',
-  },
-  {
-    question: 'How do I order sourdough online?',
-    answer:
-      'Head to the Order page, add what you’d like, and check out. Orders placed before the daily cutoff are ready the next day — pickup in Fairview, or local delivery anywhere in Oscoda County — Comins, Fairview, Luzerne, and Mio (free on orders $30 and up). Pay securely by card, or choose cash at pickup/delivery.',
-  },
-  {
-    question: 'What can I clip these to?',
-    answer:
-      'Anywhere you’d like a little personality — keys, a purse or backpack, a zipper pull, a water bottle, a diaper bag, a lanyard. Each charm has a sturdy clasp made for everyday use.',
-  },
-  {
-    question: 'How do I get in touch?',
-    answer:
-      'The best way is email. I read every message and am happy to answer questions, take orders, or chat about a custom idea. Head to the Contact page for details.',
-  },
-];
+// The wording lives here; the facts in it (pickup town, delivery towns, the
+// free-delivery amount) come from the shop's settings, so they never drift.
+function faqs(config: ShopConfig): Faq[] {
+  return [
+    {
+      question: 'Are these really handmade?',
+      answer:
+        'Yes — every single one. I design and assemble each charm and keychain by hand, one bead at a time. Nothing is mass-produced.',
+    },
+    {
+      question: 'Where can I buy your products?',
+      answer:
+        'Contact me for a list of locations where my items are currently displayed. You can also reach out to me to place a custom order.',
+    },
+    {
+      question: 'How do I order sourdough online?',
+      answer:
+        `Head to the Order page, add what you’d like, and check out. Orders placed before the daily cutoff are ready the next day — pickup in ${config.pickup.city}, or local delivery to ${joinList(config.delivery.cities)}${config.freeDeliveryThresholdCents > 0 ? ` (free on orders ${formatCents(config.freeDeliveryThresholdCents).replace(/\.00$/, '')} and up)` : ''}. ${payWords(config)}`,
+    },
+    {
+      question: 'What can I clip these to?',
+      answer:
+        'Anywhere you’d like a little personality — keys, a purse or backpack, a zipper pull, a water bottle, a diaper bag, a lanyard. Each charm has a sturdy clasp made for everyday use.',
+    },
+    {
+      question: 'How do I get in touch?',
+      answer:
+        'The best way is email. I read every message and am happy to answer questions, take orders, or chat about a custom idea. Head to the Contact page for details.',
+    },
+  ];
+}
 
-export default function FAQ() {
-  const [openItems, setOpenItems] = useState<Set<number>>(new Set());
+function payWords(config: ShopConfig): string {
+  if (config.payments.card && config.payments.cash) return 'Pay securely by card, or choose cash at pickup/delivery.';
+  if (config.payments.card) return 'Pay securely by card.';
+  return 'Pay with cash at pickup/delivery.';
+}
 
-  const toggle = (index: number) => {
-    setOpenItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-  };
+// The facts come from the database on every visit.
+export const dynamic = 'force-dynamic';
+
+export default async function FAQ() {
+  const config = await getShopConfig();
 
   return (
     <main className="min-h-screen">
@@ -56,36 +62,7 @@ export default function FAQ() {
       {/* List */}
       <section className="section-padding" style={{ backgroundColor: 'var(--white)' }}>
         <div className="container mx-auto max-w-3xl">
-          <div className="space-y-4">
-            {faqs.map((faq, index) => {
-              const open = openItems.has(index);
-              return (
-                <div key={index} className="rounded-2xl shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--cream)' }}>
-                  <button
-                    onClick={() => toggle(index)}
-                    aria-expanded={open}
-                    className="w-full px-6 py-5 text-left flex justify-between items-center cursor-pointer"
-                  >
-                    <span className="font-brand font-semibold text-lg pr-8" style={{ color: 'var(--charcoal)' }}>
-                      {faq.question}
-                    </span>
-                    <svg
-                      className="w-6 h-6 flex-shrink-0 transition-transform duration-300"
-                      style={{ color: 'var(--sage-deep)', transform: open ? 'rotate(180deg)' : 'rotate(0)' }}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  <div className="overflow-hidden transition-all duration-300" style={{ maxHeight: open ? '500px' : '0' }}>
-                    <p className="px-6 pb-5 leading-relaxed" style={{ color: 'var(--text-light)' }}>{faq.answer}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <FaqList faqs={faqs(config)} />
         </div>
       </section>
 

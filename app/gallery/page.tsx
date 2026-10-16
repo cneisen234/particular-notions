@@ -1,22 +1,21 @@
 import EmailAddress from '@/components/EmailAddress';
 import Carousel, { type Slide } from '@/components/Carousel';
+import { asc, eq } from 'drizzle-orm';
+import { db } from '@/lib/db';
+import { galleryPhotos } from '@/lib/db/schema';
 
-const slides: Slide[] = [
-  { img: '/display-stand.webp', alt: 'A stand of handmade charm clips on kraft cards' },
-  { img: '/word-charms.webp', alt: 'Word charms spelling LOVE, JOY, PEACE, HOPE and PRAY' },
-  { img: '/charm-agate.webp', alt: 'Frosted agate bead charm with a gold leaf' },
-  { img: '/charm-tassel-blue.webp', alt: 'Sky-blue tassel charm with a pearl drop' },
-  { img: '/display-tree.webp', alt: 'A gold display tree hung with beaded charms' },
-  { img: '/charm-disc.webp', alt: 'Charm of stacked slate discs with red accents' },
-  { img: '/charm-jade.webp', alt: 'Mint glass jade charm' },
-  { img: '/word-charms-wall.webp', alt: 'A wall display of word charms' },
-  { img: '/charm-yellow.webp', alt: 'Pearl with yellow accent beads' },
-  { img: '/charm-wood.webp', alt: 'Peach wood bead charm with knotted cord' },
-  { img: '/charm-floral.webp', alt: 'Frosted floral bead charm with a pink tassel' },
-  { img: '/charm-white-green.webp', alt: 'White swirl bead charm with a green tassel' },
-  { img: '/charm-tassel-pink.webp', alt: 'Rose tassel charm with a gilded bead' },
-  { img: '/charm-fish.webp', alt: 'Playful little fish-in-a-bag charm' },
-];
+// The gallery's photos, managed in Pilot Light (shown ones, in their order).
+// Read on every visit so a photo she adds or hides shows at once.
+export const dynamic = 'force-dynamic';
+
+async function getSlides(): Promise<Slide[]> {
+  const rows = await db
+    .select({ img: galleryPhotos.imageUrl, alt: galleryPhotos.altText, caption: galleryPhotos.caption })
+    .from(galleryPhotos)
+    .where(eq(galleryPhotos.visible, true))
+    .orderBy(asc(galleryPhotos.sortOrder), asc(galleryPhotos.createdAt));
+  return rows;
+}
 
 const categories = [
   {
@@ -42,7 +41,8 @@ const categories = [
   },
 ];
 
-export default function Gallery() {
+export default async function Gallery() {
+  const slides = await getSlides();
   return (
     <main className="min-h-screen">
       {/* Hero */}
@@ -58,12 +58,14 @@ export default function Gallery() {
         </div>
       </section>
 
-      {/* Carousel */}
-      <section className="pb-16 px-4" style={{ backgroundColor: 'var(--white)' }}>
-        <div className="container mx-auto pt-14">
-          <Carousel slides={slides} />
-        </div>
-      </section>
+      {/* Carousel (none when every photo is hidden) */}
+      {slides.length ? (
+        <section className="pb-16 px-4" style={{ backgroundColor: 'var(--white)' }}>
+          <div className="container mx-auto pt-14">
+            <Carousel slides={slides} />
+          </div>
+        </section>
+      ) : null}
 
       {/* What I make — the collections, kept as light text sections */}
       <section className="section-padding" style={{ backgroundColor: 'transparent' }}>

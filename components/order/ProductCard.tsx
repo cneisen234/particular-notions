@@ -37,10 +37,10 @@ function ProductImage({ product }: { product: Product }) {
         </div>
       ) : (
         // Plain <img> (not next/image) keeps placeholders forgiving while photos
-        // are still being added; swap-in real files under /public/store/.
+        // are still being added (photos are managed in Pilot Light).
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={product.imageUrl}
+          src={product.imageUrl ?? undefined}
           alt={product.name}
           className="absolute inset-0 w-full h-full object-contain p-3"
           onError={() => setFailed(true)}
@@ -55,7 +55,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const { enriched, add, setQty } = useCart();
   const orderable = isOrderable(product);
   const inCart = enriched.find((i) => i.productId === product.id)?.qty ?? 0;
-  const atLimit = inCart >= product.dailyLimit;
+  const atLimit = inCart >= product.remaining;
 
   return (
     <div

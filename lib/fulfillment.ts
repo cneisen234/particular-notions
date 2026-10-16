@@ -1,8 +1,8 @@
 // Fulfillment + payment methods, delivery-area validation, and the cutoff-aware
-// "next day" scheduling. Pure logic (no server-only imports) so both the
-// storefront and the server checkout can use it.
+// "next day" scheduling. Pure logic over the shop's settings (no server-only
+// imports) so both the storefront and the server checkout can use it.
 
-import { shopConfig } from "@/lib/shop-config";
+import type { ShopConfig } from "@/lib/shop-config";
 import type { Product } from "@/lib/inventory";
 
 export type FulfillmentMethod = "pickup" | "delivery";
@@ -13,11 +13,11 @@ export function availableFulfillmentMethods(): FulfillmentMethod[] {
   return ["pickup", "delivery"];
 }
 
-/** Payment methods enabled in shop config. */
-export function availablePaymentMethods(): PaymentMethod[] {
+/** Payment methods enabled in the shop settings. */
+export function availablePaymentMethods(config: ShopConfig): PaymentMethod[] {
   const out: PaymentMethod[] = [];
-  if (shopConfig.payments.card) out.push("card");
-  if (shopConfig.payments.cash) out.push("cash");
+  if (config.payments.card) out.push("card");
+  if (config.payments.cash) out.push("cash");
   return out;
 }
 
@@ -25,8 +25,8 @@ export function isFulfillmentMethodAvailable(m: FulfillmentMethod): boolean {
   return availableFulfillmentMethods().includes(m);
 }
 
-export function isPaymentMethodAvailable(m: PaymentMethod): boolean {
-  return availablePaymentMethods().includes(m);
+export function isPaymentMethodAvailable(config: ShopConfig, m: PaymentMethod): boolean {
+  return availablePaymentMethods(config).includes(m);
 }
 
 // ---- Delivery area ----
@@ -49,14 +49,15 @@ function zip5(zip: string): string {
 }
 
 /**
- * Is this address inside the delivery area? Delivery is limited to the configured
- * state, towns, and ZIPs (see shopConfig.delivery). Returns a reason on failure
- * so the UI can tell the customer why.
+ * Is this address inside the delivery area? Delivery is limited to the shop's
+ * state, towns, and ZIPs. Returns a reason on failure so the UI can tell the
+ * customer why.
  */
 export function validateDeliveryAddress(
+  config: ShopConfig,
   a: DeliveryAddressInput,
 ): { ok: true } | { ok: false; reason: string } {
-  const { delivery } = shopConfig;
+  const { delivery } = config;
   const state = a.state.trim().toUpperCase();
   const city = a.city.trim().toLowerCase();
   const zip = zip5(a.zip);
@@ -83,18 +84,18 @@ export function validateDeliveryAddress(
 // ---- Lead time (advance notice) ----
 
 /** Advance notice a single product needs, falling back to the shop default. */
-export function productLeadTimeHours(p: Product): number {
-  return p.leadTimeHours ?? shopConfig.defaultLeadTimeHours;
+export function productLeadTimeHours(config: ShopConfig, p: Pick<Product, "leadTimeHours">): number {
+  return p.leadTimeHours ?? config.defaultLeadTimeHours;
 }
 
 /**
  * How much notice an order needs: the longest lead time of anything in it (so a
  * cart with one 48h item is a 48h order). Empty carts fall back to the default.
  */
-export function orderLeadTimeHours(products: Product[]): number {
+export function orderLeadTimeHours(config: ShopConfig, products: Pick<Product, "leadTimeHours">[]): number {
   return products.reduce(
-    (max, p) => Math.max(max, productLeadTimeHours(p)),
-    shopConfig.defaultLeadTimeHours,
+    (max, p) => Math.max(max, productLeadTimeHours(config, p)),
+    config.defaultLeadTimeHours,
   );
 }
 
@@ -123,24 +124,30 @@ export type FulfillmentSchedule = {
   afterCutoff: boolean;
 };
 
+/** A schedule's day as YYYY-MM-DD (how orders store it). */
+export function isoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
 /**
  * When an order placed `now` will be fulfilled. Orders before the cutoff hour are
  * ready the next day; orders at/after the cutoff roll to the day after next. A
  * `leadTimeHours` above the shop default rolls the date out further — one extra
  * day per extra 24h of notice (e.g. a 48h order lands a day later than a 24h one).
- * All computed in the shop's configured time zone.
+ * All computed in the shop's time zone.
  */
 export function fulfillmentSchedule(
+  config: ShopConfig,
   now: Date = new Date(),
-  leadTimeHours: number = shopConfig.defaultLeadTimeHours,
+  leadTimeHours: number = config.defaultLeadTimeHours,
 ): FulfillmentSchedule {
-  const { year, month, day, hour } = localParts(now, shopConfig.timeZone);
-  const afterCutoff = hour >= shopConfig.orderCutoffHour;
+  const { year, month, day, hour } = localParts(now, config.timeZone);
+  const afterCutoff = hour >= config.orderCutoffHour;
   // Extra whole days an above-default lead time adds on top of the usual
   // next-day turnaround (0 for a default-lead order).
   const extraDays = Math.max(
     0,
-    Math.round((leadTimeHours - shopConfig.defaultLeadTimeHours) / 24),
+    Math.round((leadTimeHours - config.defaultLeadTimeHours) / 24),
   );
   // Anchor at UTC noon so adding days never trips over a DST boundary.
   const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));

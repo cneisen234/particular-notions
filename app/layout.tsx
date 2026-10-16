@@ -3,6 +3,8 @@ import { Cormorant_Garamond, Quicksand, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { connection } from "next/server";
+import { getSiteNav } from "@/lib/pilot-light";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -27,16 +29,29 @@ export const metadata: Metadata = {
     "Particular Notions is a collection of handmade beaded charms, keychains, and little treasures — each one made with care by Megan. Uniquely creative, individually expressive.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Every page renders on request, so the menu follows the add-ons the moment
+  // they're switched in Pilot Light (a page built at deploy would keep its menu).
+  await connection();
+  // Each page with the Pilot Light add-on behind it: the site module leaves out
+  // the ones that are off (docs/site-conventions.md §4, in Pilot Light).
+  const nav = await getSiteNav([
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/gallery", label: "Gallery", addon: "cms" },
+    { href: "/order", label: "Order", addon: "ecommerce" },
+    { href: "/faq", label: "FAQ" },
+  ]);
+
   return (
     <html
       lang="en"
       className={`${cormorant.variable} ${quicksand.variable} ${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navigation />
+        <Navigation links={nav.links} />
         {children}
-        <Footer />
+        <Footer columns={nav.footer} />
       </body>
     </html>
   );

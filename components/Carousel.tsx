@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Zoom from './Zoom';
 import PhotoFrame from './PhotoFrame';
 
-export type Slide = { img: string; alt: string };
+export type Slide = { img: string; alt: string; caption?: string | null };
 
 /*
  * Branded photo carousel for the Gallery.
@@ -98,6 +98,13 @@ export default function Carousel({ slides }: { slides: Slide[] }) {
           </svg>
         </button>
       </div>
+
+      {/* The photo's caption, when it has one */}
+      {slides[active]?.caption ? (
+        <p className="mt-5 text-center leading-relaxed" style={{ color: 'var(--charcoal)' }}>
+          {slides[active].caption}
+        </p>
+      ) : null}
 
       {/* Dots + counter */}
       <div className="mt-6 flex flex-col items-center gap-3">

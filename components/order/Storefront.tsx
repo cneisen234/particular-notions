@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { catalogByCategory } from "@/lib/inventory";
-import { shopConfig } from "@/lib/shop-config";
 import { fulfillmentSchedule } from "@/lib/fulfillment";
 import { useCart } from "./CartProvider";
 import ProductCard from "./ProductCard";
@@ -36,15 +35,16 @@ function FloatingCartButton() {
 }
 
 export default function Storefront() {
-  const groups = catalogByCategory();
-  // Compute the "ready" date in the browser after mount, not during render — this
-  // page is statically prerendered, so a render-time date would freeze at build
-  // time and only change on redeploy. Recomputing client-side keeps it current.
+  const { shop } = useCart();
+  const shopConfig = shop.config;
+  const groups = catalogByCategory(shop);
+  // Compute the "ready" date in the browser after mount, not during render, so
+  // the server's render and the browser's agree (the date is the visitor's now).
   const [readyLabel, setReadyLabel] = useState<string | null>(null);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- compute date after mount so a static build doesn't freeze it
-    setReadyLabel(fulfillmentSchedule().label);
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- compute date after mount so server and browser renders match
+    setReadyLabel(fulfillmentSchedule(shopConfig).label);
+  }, [shopConfig]);
 
   if (!shopConfig.acceptingOrders) {
     return (

@@ -20,6 +20,33 @@
   --color-background: var(--cream);
   --color-surface: var(--white);
   --color-text: var(--charcoal);
+
+  /* A touch deeper than --sage-deep and --text-light, so Pilot Light's text on
+     them reads 4.5:1 (white on --sage-deep is 3.7:1; --sage-ink is the buttons'
+     own hover color). */
+  --sage-ink: #5f7a67;
+  --text-muted: #736b5f;
+
+  /* Kindling site conventions: theme (docs/site-conventions.md, in Pilot Light) */
+  --background: var(--cream);
+  --foreground: var(--charcoal);
+  --surface: var(--white);
+  --muted-foreground: var(--text-muted);
+  --brand: var(--sage-ink);
+  --brand-foreground: var(--white);
+  --font-body: var(--font-nunito);
+  --font-heading: var(--font-cormorant);
+
+  /* style */
+  --outline: var(--border);
+  --outline-width: 1px;
+  --radius: 16px;
+  --radius-field: 8px;
+  --radius-button: 9999px;
+  --shadow: 0 2px 10px rgba(64, 58, 50, 0.08);
+  --shadow-button: 0 2px 10px rgba(111, 140, 120, 0.25);
+  --brand-soft: var(--sage-soft);
+  --brand-soft-foreground: var(--charcoal);
 }
 
 @theme inline {

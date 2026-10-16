@@ -1,15 +1,13 @@
-// Shop-wide configuration for the Particular Notions online store.
-//
-// There is NO database and NO admin portal. This file (plus lib/inventory.ts) is
-// the single source of truth for how the store behaves. To change something,
-// edit the values here and redeploy.
+// How the store behaves: the shop settings, read from the database (lib/shop.ts)
+// and managed in Pilot Light. Plain types only, so both the storefront (browser)
+// and the checkout (server) can use them.
 
 export type DeliveryArea = {
   /** Two-letter state code deliveries are limited to. */
   state: string;
   /** Towns eligible for delivery (matched case-insensitively at checkout). */
   cities: string[];
-  /** ZIP codes eligible for delivery. */
+  /** ZIP codes eligible for delivery, in the same order as `cities`. */
   zips: string[];
 };
 
@@ -23,84 +21,26 @@ export type PickupLocation = {
 };
 
 export type ShopConfig = {
-  /** Master on/off switch for online ordering. Set false to pause the store. */
+  /** Master on/off switch for online ordering. */
   acceptingOrders: boolean;
   /** Shown to customers when acceptingOrders is false. */
   pausedMessage: string;
-
   /** Flat delivery fee (integer cents). Delivery only — pickup is free. */
   deliveryFeeCents: number;
-  /**
-   * Subtotal (integer cents) at/above which the delivery fee is waived. Set to a
-   * very large number to effectively disable free delivery.
-   */
+  /** Subtotal (integer cents) at/above which the delivery fee is waived. */
   freeDeliveryThresholdCents: number;
-  /**
-   * Card surcharge in basis points (300 = 3%). Applied to (subtotal + delivery
-   * fee) for card orders; waived entirely for cash.
-   */
+  /** Card surcharge in basis points (300 = 3%) of subtotal + delivery fee; none for cash. */
   cardSurchargeBps: number;
-
-  /**
-   * Same-day order cutoff hour (0-23, local time). Orders placed BEFORE this
-   * hour are fulfilled next day; orders at/after it roll to the day after next.
-   */
+  /** Orders at/after this hour (0-23, local) roll to the day after next. */
   orderCutoffHour: number;
   /** IANA timezone the cutoff and "next day" are computed in. */
   timeZone: string;
-
-  /**
-   * Default advance notice (hours) an order needs, unless a product overrides it
-   * with its own `leadTimeHours`. 24 = the usual next-day turnaround; a product
-   * asking for more (e.g. 48) rolls its orders out an extra day.
-   */
+  /** Advance notice (hours) an order needs, unless a product needs more. */
   defaultLeadTimeHours: number;
-
-  /** Where pickup orders are collected. Shown at checkout for pickup orders. */
+  /** Where pickup orders are collected. */
   pickup: PickupLocation;
-
   /** Geographic limits for delivery orders (validated at checkout). */
   delivery: DeliveryArea;
-
   /** Which payment methods customers may choose. */
-  payments: {
-    card: boolean;
-    cash: boolean;
-  };
-};
-
-export const shopConfig: ShopConfig = {
-  acceptingOrders: true,
-  pausedMessage:
-    "Online ordering is paused right now — check back soon, or email us to ask about an order.",
-
-  deliveryFeeCents: 300, // $3.00 flat, delivery only
-  freeDeliveryThresholdCents: 3000, // free delivery on subtotals >= $30
-  cardSurchargeBps: 300, // 3% card surcharge, waived for cash
-
-  orderCutoffHour: 18, // 6:00 PM — later orders roll to the day after next
-  timeZone: "America/Detroit", // Michigan (Eastern)
-
-  defaultLeadTimeHours: 24, // next-day turnaround for everything by default
-
-  pickup: {
-    label: "Pickup at our house",
-    addressLine: "3101 E Miller Rd",
-    city: "Fairview",
-    state: "MI",
-    zip: "48621",
-  },
-
-  // All of Oscoda County. Keep cities and zips in the same order — picking a
-  // town at checkout auto-selects the ZIP at the same position.
-  delivery: {
-    state: "MI",
-    cities: ["Comins", "Fairview", "Luzerne", "Mio"],
-    zips: ["48619", "48621", "48636", "48647"],
-  },
-
-  payments: {
-    card: true,
-    cash: true,
-  },
+  payments: { card: boolean; cash: boolean };
 };

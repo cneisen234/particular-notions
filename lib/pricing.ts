@@ -1,15 +1,15 @@
 // Order pricing — the single source of truth for order math, used by both the
-// checkout preview (client) and the server checkout. Prices come from the static
-// inventory, never from the client, so client and server always agree.
+// checkout preview (client) and the server checkout. Prices come from the shop
+// loaded from the database, never from the client, so client and server agree.
 //
-// Rules (per the build spec):
+// Rules:
 //   • Delivery fee: flat, delivery orders only. Pickup is free. Waived when the
-//     subtotal reaches shopConfig.freeDeliveryThresholdCents.
+//     subtotal reaches the free-delivery amount.
 //   • Card surcharge: cardSurchargeBps of (subtotal + delivery fee). Cash = none.
 //   • No sales tax.
 
-import { getProduct } from "@/lib/inventory";
-import { shopConfig } from "@/lib/shop-config";
+import { getProduct, type Shop } from "@/lib/inventory";
+import type { ShopConfig } from "@/lib/shop-config";
 import type { FulfillmentMethod, PaymentMethod } from "@/lib/fulfillment";
 
 export type CartLine = { productId: string; qty: number };
@@ -38,24 +38,25 @@ export type PricedOrder = OrderTotals & {
  * Delivery fee for a method + subtotal: the flat fee for delivery, nothing for
  * pickup, and nothing once the subtotal reaches the free-delivery threshold.
  */
-export function deliveryFeeFor(method: FulfillmentMethod, subtotalCents: number): number {
+export function deliveryFeeFor(config: ShopConfig, method: FulfillmentMethod, subtotalCents: number): number {
   if (method !== "delivery") return 0;
-  if (subtotalCents >= shopConfig.freeDeliveryThresholdCents) return 0;
-  return shopConfig.deliveryFeeCents;
+  if (subtotalCents >= config.freeDeliveryThresholdCents) return 0;
+  return config.deliveryFeeCents;
 }
 
 /** Card surcharge on a base amount (0 for cash). */
-export function cardSurchargeFor(baseCents: number, payment: PaymentMethod): number {
+export function cardSurchargeFor(config: ShopConfig, baseCents: number, payment: PaymentMethod): number {
   if (payment !== "card") return 0;
-  return Math.round((baseCents * shopConfig.cardSurchargeBps) / 10000);
+  return Math.round((baseCents * config.cardSurchargeBps) / 10000);
 }
 
 /**
  * Price a cart. Unknown products and non-positive quantities are skipped here —
  * availability, daily limits, and the accepting-orders switch are enforced
- * separately at checkout (Step 5); this function only does the money.
+ * separately at checkout; this function only does the money.
  */
 export function computeOrder(
+  shop: Shop,
   lines: CartLine[],
   method: FulfillmentMethod,
   payment: PaymentMethod,
@@ -65,7 +66,7 @@ export function computeOrder(
   let itemCount = 0;
 
   for (const line of lines) {
-    const product = getProduct(line.productId);
+    const product = getProduct(shop, line.productId);
     if (!product) continue;
     const qty = Math.floor(line.qty);
     if (!Number.isFinite(qty) || qty <= 0) continue;
@@ -81,8 +82,8 @@ export function computeOrder(
     });
   }
 
-  const deliveryFeeCents = deliveryFeeFor(method, subtotalCents);
-  const cardSurchargeCents = cardSurchargeFor(subtotalCents + deliveryFeeCents, payment);
+  const deliveryFeeCents = deliveryFeeFor(shop.config, method, subtotalCents);
+  const cardSurchargeCents = cardSurchargeFor(shop.config, subtotalCents + deliveryFeeCents, payment);
   const totalCents = subtotalCents + deliveryFeeCents + cardSurchargeCents;
 
   return {

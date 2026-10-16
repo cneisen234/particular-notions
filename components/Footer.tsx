@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import EmailAddress from './EmailAddress';
+import type { SiteFooterColumn } from '@/lib/pilot-light';
 
-export default function Footer() {
+export default function Footer({ columns }: { columns: SiteFooterColumn[] }) {
   return (
     <footer className="mt-auto border-t bg-white" style={{ borderColor: 'var(--border)' }}>
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-8 mb-8">
           {/* Brand */}
           <div>
             <h3
@@ -20,26 +21,23 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Quick links */}
-          <div>
-            <h4 className="font-brand font-semibold mb-4" style={{ color: 'var(--charcoal)' }}>
-              Explore
-            </h4>
-            <ul className="space-y-2 text-sm">
-              {[
-                { href: '/about', label: 'About Me' },
-                { href: '/gallery', label: 'Gallery' },
-                { href: '/faq', label: 'FAQ' },
-                { href: '/contact', label: 'Contact & Custom Orders' },
-              ].map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} className="transition-colors hover:underline" style={{ color: 'var(--text-light)' }}>
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* The header's links (the site module's footer columns) */}
+          {columns.map((c) => (
+            <div key={c.title}>
+              <h4 className="font-brand font-semibold mb-4" style={{ color: 'var(--charcoal)' }}>
+                {c.title}
+              </h4>
+              <ul className="space-y-2 text-sm">
+                {c.links.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} className="transition-colors hover:underline" style={{ color: 'var(--text-light)' }}>
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           {/* Contact */}
           <div>
@@ -52,6 +50,11 @@ export default function Footer() {
               </p>
               <p>
                 <EmailAddress />
+              </p>
+              <p>
+                <Link href="/contact" className="transition-colors hover:underline" style={{ color: 'var(--text-light)' }}>
+                  Contact &amp; Custom Orders
+                </Link>
               </p>
             </div>
           </div>

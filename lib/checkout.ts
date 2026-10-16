@@ -1,17 +1,22 @@
-// Server-side checkout. Prices and validates against OUR static inventory (never
-// trusting client money), charges the card via Square Payments for card orders
-// (cash orders skip the charge), then sends notifications. No database.
+// Server-side checkout. Prices and validates against the shop in the database
+// (never trusting client money), saves the order, charges the card via Square
+// Payments for card orders (cash orders are saved unpaid), then sends
+// notifications.
 //
 // Server-only.
 
 import "server-only";
+import { eq, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { orderItems, orders, payments } from "@/lib/db/schema";
 import { square, locationId } from "@/lib/square";
-import { getProduct, isOrderable } from "@/lib/inventory";
-import { shopConfig } from "@/lib/shop-config";
+import { getShop, orderedOn } from "@/lib/shop";
+import { getProduct, isOrderable, type Shop } from "@/lib/inventory";
 import { computeOrder, type CartLine } from "@/lib/pricing";
 import {
   validateDeliveryAddress,
   fulfillmentSchedule,
+  isoDate,
   orderLeadTimeHours,
   isFulfillmentMethodAvailable,
   isPaymentMethodAvailable,
@@ -61,10 +66,14 @@ export class PaymentError extends Error {
   }
 }
 
-/** Re-check the cart against live inventory, the kill switch, and daily limits. */
-export function validateOrder(input: CheckoutInput): void {
-  if (!shopConfig.acceptingOrders) {
-    throw new OrderError([shopConfig.pausedMessage], [], true);
+/**
+ * Re-check the cart against the shop, the kill switch, and what's left of each
+ * item's daily limit for the order's day (`left`: productId → count left that day).
+ */
+export function validateOrder(shop: Shop, input: CheckoutInput, left: Map<string, number>): void {
+  const { config } = shop;
+  if (!config.acceptingOrders) {
+    throw new OrderError([config.pausedMessage], [], true);
   }
   if (!Array.isArray(input.lines) || input.lines.length === 0) {
     throw new OrderError(["Your cart is empty."]);
@@ -74,7 +83,7 @@ export function validateOrder(input: CheckoutInput): void {
   const soldOut: string[] = [];
 
   for (const line of input.lines) {
-    const product = getProduct(line.productId);
+    const product = getProduct(shop, line.productId);
     if (!product) {
       problems.push("An item in your cart is no longer available.");
       soldOut.push(line.productId);
@@ -84,13 +93,14 @@ export function validateOrder(input: CheckoutInput): void {
       problems.push(`Invalid quantity for ${product.name}.`);
       continue;
     }
-    if (!isOrderable(product)) {
+    const remaining = left.get(product.id) ?? 0;
+    if (!isOrderable(product) || remaining <= 0) {
       problems.push(`${product.name} is sold out.`);
       soldOut.push(product.id);
       continue;
     }
-    if (line.qty > product.dailyLimit) {
-      problems.push(`Only ${product.dailyLimit} of ${product.name} left today.`);
+    if (line.qty > remaining) {
+      problems.push(`Only ${remaining} of ${product.name} left for that day.`);
       soldOut.push(product.id);
     }
   }
@@ -103,16 +113,19 @@ export function validateOrder(input: CheckoutInput): void {
     if (!a?.line1?.trim() || !a?.city?.trim() || !a?.state?.trim() || !a?.zip?.trim()) {
       problems.push("Please enter your full delivery address.");
     } else {
-      const r = validateDeliveryAddress({ city: a.city, state: a.state, zip: a.zip });
+      const r = validateDeliveryAddress(config, { city: a.city, state: a.state, zip: a.zip });
       if (!r.ok) problems.push(r.reason);
     }
   }
 
-  if (!isPaymentMethodAvailable(input.payment)) {
+  if (!isPaymentMethodAvailable(config, input.payment)) {
     problems.push("That payment method isn't available.");
   }
   if (input.payment === "card" && !input.sourceId) {
     problems.push("Missing card details.");
+  }
+  if (!input.customer?.name?.trim() || !input.customer?.email?.trim()) {
+    problems.push("Please enter your name and email.");
   }
 
   if (problems.length > 0) {
@@ -136,48 +149,94 @@ function makeShortId(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
-/** Validate, charge (card only), notify, and return the placed order. */
+/** One order saved at a time, so two orders can't both take the last of an item. */
+const ORDER_LOCK = 72_014_001;
+
+/** Validate, save, charge (card only), notify, and return the placed order. */
 export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
-  validateOrder(input);
+  const now = new Date();
+  const shortId = makeShortId();
 
-  // Authoritative totals from our inventory — client money is ignored.
-  const totals = computeOrder(input.lines, input.method, input.payment);
-  if (totals.totalCents <= 0) throw new OrderError(["Order total is invalid."]);
+  // Saved first (holding the item counts for the order's day), then charged.
+  const saved = await db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(${ORDER_LOCK})`);
+    const shop = await getShop(now, tx);
+    const ordered = (input.lines ?? []).map((l) => getProduct(shop, l.productId)).filter((p): p is NonNullable<typeof p> => Boolean(p));
+    // The order's day honors the longest lead time in the cart.
+    const schedule = fulfillmentSchedule(shop.config, now, orderLeadTimeHours(shop.config, ordered));
+    const day = isoDate(schedule.date);
+    const counts = await orderedOn([day], tx);
+    const left = new Map(ordered.map((p) => [p.id, Math.max(0, p.dailyLimit - (counts.get(`${p.id}|${day}`) ?? 0))]));
+    validateOrder(shop, input, left);
 
-  const orderId = makeShortId();
+    // Authoritative totals from the shop — client money is ignored.
+    const totals = computeOrder(shop, input.lines, input.method, input.payment);
+    if (totals.totalCents <= 0) throw new OrderError(["Order total is invalid."]);
+
+    const address = input.method === "delivery" ? input.address! : undefined;
+    const [order] = await tx
+      .insert(orders)
+      .values({
+        shortId,
+        method: input.method,
+        fulfillmentDate: day,
+        customerName: input.customer.name.trim(),
+        customerEmail: input.customer.email.trim().toLowerCase(),
+        customerPhone: input.customer.phone?.trim() || null,
+        note: input.customer.note?.trim() || null,
+        addressLine1: address?.line1.trim() ?? null,
+        addressLine2: address?.line2?.trim() || null,
+        city: address?.city.trim() ?? null,
+        state: address?.state.trim().toUpperCase() ?? null,
+        zip: address?.zip.trim() ?? null,
+        subtotalCents: totals.subtotalCents,
+        deliveryFeeCents: totals.deliveryFeeCents,
+        cardSurchargeCents: totals.cardSurchargeCents,
+        totalCents: totals.totalCents,
+      })
+      .returning({ id: orders.id });
+    await tx.insert(orderItems).values(
+      totals.lines.map((l) => ({ orderId: order.id, productId: l.productId, productName: l.name, unitPriceCents: l.unitPriceCents, qty: l.qty, lineTotalCents: l.lineTotalCents })),
+    );
+    const [payment] = await tx
+      .insert(payments)
+      .values({ orderId: order.id, method: input.payment, status: "pending", amountCents: totals.totalCents })
+      .returning({ id: payments.id });
+    return { orderId: order.id, paymentRowId: payment.id, totals, scheduleLabel: schedule.label, pickup: shop.config.pickup };
+  });
+
   let paymentId: string | undefined;
-
   if (input.payment === "card") {
     try {
       const payment = await square().payments.create({
         idempotencyKey: crypto.randomUUID(),
         sourceId: input.sourceId!,
-        amountMoney: { amount: BigInt(totals.totalCents), currency: "USD" as const },
+        amountMoney: { amount: BigInt(saved.totals.totalCents), currency: "USD" as const },
         locationId: locationId(),
         autocomplete: true,
-        note: `Particular Notions order ${orderId} (${input.method})`,
+        note: `Particular Notions order ${shortId} (${input.method})`,
       });
       paymentId = payment.payment?.id;
       if (payment.payment?.status !== "COMPLETED") {
         throw new PaymentError();
       }
     } catch (err) {
+      // Never charged: the order didn't happen, so its items go back.
+      await db.delete(orders).where(eq(orders.id, saved.orderId));
       if (err instanceof PaymentError) throw err;
       console.error("[checkout] Square charge failed:", err);
       throw new PaymentError();
     }
+    await db
+      .update(payments)
+      .set({ status: "completed", squarePaymentId: paymentId ?? null, updatedAt: new Date() })
+      .where(eq(payments.id, saved.paymentRowId))
+      .catch((err) => console.error("[checkout] couldn't record the card payment:", err));
   }
-
-  // Ready date honors the longest lead time in the cart (validated above, so
-  // every line resolves to a real product).
-  const orderedProducts = input.lines
-    .map((l) => getProduct(l.productId))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p));
-  const scheduleLabel = fulfillmentSchedule(new Date(), orderLeadTimeHours(orderedProducts)).label;
 
   // Notifications (email) — best-effort, never throw. Order is already placed.
   await notifyNewOrder({
-    orderId,
+    orderId: shortId,
     method: input.method,
     payment: input.payment,
     customerName: input.customer.name,
@@ -185,30 +244,31 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
     customerPhone: input.customer.phone || undefined,
     note: input.customer.note || undefined,
     address: input.method === "delivery" ? input.address : undefined,
-    lines: totals.lines.map((l) => ({
+    lines: saved.totals.lines.map((l) => ({
       name: l.name,
       qty: l.qty,
       lineTotalCents: l.lineTotalCents,
     })),
-    subtotalCents: totals.subtotalCents,
-    deliveryFeeCents: totals.deliveryFeeCents,
-    cardSurchargeCents: totals.cardSurchargeCents,
-    totalCents: totals.totalCents,
-    scheduleLabel,
+    subtotalCents: saved.totals.subtotalCents,
+    deliveryFeeCents: saved.totals.deliveryFeeCents,
+    cardSurchargeCents: saved.totals.cardSurchargeCents,
+    totalCents: saved.totals.totalCents,
+    scheduleLabel: saved.scheduleLabel,
+    pickup: saved.pickup,
   }).catch((err) => {
     console.error("[checkout] notifyNewOrder threw unexpectedly:", err);
     return { ownerAlerted: false };
   });
 
   return {
-    orderId,
+    orderId: shortId,
     method: input.method,
     payment: input.payment,
-    subtotalCents: totals.subtotalCents,
-    deliveryFeeCents: totals.deliveryFeeCents,
-    cardSurchargeCents: totals.cardSurchargeCents,
-    totalCents: totals.totalCents,
-    scheduleLabel,
+    subtotalCents: saved.totals.subtotalCents,
+    deliveryFeeCents: saved.totals.deliveryFeeCents,
+    cardSurchargeCents: saved.totals.cardSurchargeCents,
+    totalCents: saved.totals.totalCents,
+    scheduleLabel: saved.scheduleLabel,
     paymentId,
   };
 }

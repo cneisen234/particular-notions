@@ -5,15 +5,12 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-const links = [
-  { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
-  { href: '/gallery', label: 'Gallery' },
-  { href: '/order', label: 'Order' },
-  { href: '/faq', label: 'FAQ' },
-];
+export type NavLink = { href: string; label: string };
 
-export default function Navigation() {
+// The header's links come from the root layout (the site module's getSiteNav:
+// pages whose Pilot Light add-on is off are left out; docs/site-conventions.md
+// §4, in Pilot Light). Up to 6 links, so no categories.
+export default function Navigation({ links }: { links: NavLink[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();

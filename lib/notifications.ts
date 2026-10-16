@@ -10,7 +10,8 @@
 
 import "server-only";
 import { formatCents } from "@/lib/money";
-import { shopConfig } from "@/lib/shop-config";
+import type { PickupLocation } from "@/lib/shop-config";
+import { siteEmailHeaders, type SiteEmailKind } from "@/lib/pilot-light";
 import type { FulfillmentMethod, PaymentMethod } from "@/lib/fulfillment";
 
 export type OrderNotice = {
@@ -30,6 +31,8 @@ export type OrderNotice = {
   totalCents: number;
   /** e.g. "Tuesday, September 9". */
   scheduleLabel: string;
+  /** The shop's pickup address (from its settings). */
+  pickup: PickupLocation;
 };
 
 // ---- Brand palette (matches the site's CSS variables) ----
@@ -53,8 +56,7 @@ function paymentLabel(p: PaymentMethod): string {
   return p === "card" ? "Paid by card" : "Cash at pickup/delivery";
 }
 
-function fullPickupAddress(): string {
-  const p = shopConfig.pickup;
+function fullPickupAddress(p: PickupLocation): string {
   return `${p.addressLine}, ${p.city}, ${p.state} ${p.zip}`;
 }
 
@@ -137,6 +139,8 @@ function orderMeta(n: OrderNotice): string {
 
 // ---- Low-level SendGrid send. Returns true if accepted. Never throws. ----
 async function sendEmail(opts: {
+  /** What the email is (required): Pilot Light sorts the store's mail by it (site conventions §5). */
+  kind: SiteEmailKind;
   to: string;
   subject: string;
   text: string;
@@ -158,6 +162,7 @@ async function sendEmail(opts: {
         from: { email: from, name: "Particular Notions" },
         ...(opts.replyTo ? { reply_to: { email: opts.replyTo } } : {}),
         subject: opts.subject,
+        headers: siteEmailHeaders(opts.kind),
         content: [
           { type: "text/plain", value: opts.text },
           { type: "text/html", value: opts.html },
@@ -192,7 +197,7 @@ async function sendCustomerConfirmation(n: OrderNotice): Promise<boolean> {
   const isDelivery = n.method === "delivery";
   const whereText = isDelivery
     ? `We'll deliver to ${fullDeliveryAddress(n.address!)} and email you to confirm a time.`
-    : `Pickup address: ${fullPickupAddress()}.`;
+    : `Pickup address: ${fullPickupAddress(n.pickup)}.`;
   const payText =
     n.payment === "cash"
       ? `Please have ${formatCents(n.totalCents)} in cash ready at ${isDelivery ? "delivery" : "pickup"}.`
@@ -217,7 +222,7 @@ async function sendCustomerConfirmation(n: OrderNotice): Promise<boolean> {
 
   const whereInner = isDelivery
     ? `<strong style="color:${C.sage};">Delivering to</strong><br/>${fullDeliveryAddress(n.address!)}<br/><span style="color:${C.textLight};">We'll email you to confirm a time.</span>`
-    : `<strong style="color:${C.sage};">Pickup address</strong><br/>${fullPickupAddress()}`;
+    : `<strong style="color:${C.sage};">Pickup address</strong><br/>${fullPickupAddress(n.pickup)}`;
 
   const content = `
     <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:${C.sage};margin:0 0 16px;">Thanks for your order, ${n.customerName}!</h1>
@@ -234,6 +239,7 @@ async function sendCustomerConfirmation(n: OrderNotice): Promise<boolean> {
     <p style="margin:24px 0 0;font-size:14px;color:${C.textLight};">With love,<br/>Particular Notions</p>`;
 
   return sendEmail({
+    kind: "order_confirmation",
     to: n.customerEmail,
     subject: `Your Particular Notions order #${n.orderId}`,
     text,
@@ -252,7 +258,7 @@ async function sendOwnerAlert(n: OrderNotice): Promise<boolean> {
   const whereText =
     n.method === "delivery"
       ? `Deliver to: ${fullDeliveryAddress(n.address!)}`
-      : `Pickup at: ${fullPickupAddress()}`;
+      : `Pickup at: ${fullPickupAddress(n.pickup)}`;
 
   const text = [
     `New order #${n.orderId}`,
@@ -283,7 +289,7 @@ async function sendOwnerAlert(n: OrderNotice): Promise<boolean> {
     <tr><td style="padding:3px 0;color:${C.textLight};">Email</td><td style="padding:3px 0;"><a href="mailto:${n.customerEmail}" style="color:${C.sage};">${n.customerEmail}</a></td></tr>
     ${n.customerPhone ? `<tr><td style="padding:3px 0;color:${C.textLight};">Phone</td><td style="padding:3px 0;">${n.customerPhone}</td></tr>` : ""}
     <tr><td style="padding:3px 0;color:${C.textLight};vertical-align:top;">${n.method === "delivery" ? "Deliver" : "Pickup"}</td><td style="padding:3px 0;">${
-      n.method === "delivery" ? fullDeliveryAddress(n.address!) : fullPickupAddress()
+      n.method === "delivery" ? fullDeliveryAddress(n.address!) : fullPickupAddress(n.pickup)
     }</td></tr>`;
 
   const content = `
@@ -296,6 +302,7 @@ async function sendOwnerAlert(n: OrderNotice): Promise<boolean> {
     ${totalsTable(n)}`;
 
   return sendEmail({
+    kind: "order_alert",
     to: alertTo,
     subject: `New order #${n.orderId} — ${methodLabel(n.method)} (${paymentLabel(n.payment)})`,
     text,
