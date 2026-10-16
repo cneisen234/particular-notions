@@ -4,7 +4,7 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { connection } from "next/server";
-import { getSiteNav } from "@/lib/pilot-light";
+import { LenaForCustomers, getSiteNav } from "@/lib/pilot-light";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -52,6 +52,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <Navigation links={nav.links} />
         {children}
         <Footer columns={nav.footer} />
+        {/* The chat with the shop (Pilot Light's Lena for customers, with Lena's answers off: messages wait for Megan). */}
+        <LenaForCustomers />
       </body>
     </html>
   );
