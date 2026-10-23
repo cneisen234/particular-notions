@@ -132,6 +132,14 @@ export default function CartDrawer() {
                 {formatCents(subtotalCents)}
               </span>
             </div>
+            {/* Free delivery, right at the cart (Megan's request, 2026-10-23): the same words checkout uses. */}
+            {shop.config.freeDeliveryThresholdCents > 0 ? (
+              <p className="text-sm font-semibold mb-1" style={{ color: "var(--sage-deep)" }}>
+                {subtotalCents >= shop.config.freeDeliveryThresholdCents
+                  ? "🎉 You've qualified for free delivery!"
+                  : `Add ${formatCents(shop.config.freeDeliveryThresholdCents - subtotalCents)} more for free delivery (orders ${formatCents(shop.config.freeDeliveryThresholdCents)}+).`}
+              </p>
+            ) : null}
             <p className="text-xs mb-4" style={{ color: "var(--text-light)" }}>
               Delivery fee and (for card) the {shop.config.cardSurchargeBps / 100}% surcharge are calculated at checkout.
             </p>
