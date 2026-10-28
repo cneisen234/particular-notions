@@ -214,7 +214,7 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
         amountMoney: { amount: BigInt(saved.totals.totalCents), currency: "USD" as const },
         locationId: locationId(),
         autocomplete: true,
-        note: `Particular Notions order ${shortId} (${input.method})`,
+        note: `Megan's Sourdough order ${shortId} (${input.method})`,
       });
       paymentId = payment.payment?.id;
       if (payment.payment?.status !== "COMPLETED") {

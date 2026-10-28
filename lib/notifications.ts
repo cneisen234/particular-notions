@@ -1,6 +1,7 @@
 // Order notifications — email only, via Twilio SendGrid:
 //   1. an alert email to the owner (ORDER_ALERT_EMAIL), and
 //   2. a branded confirmation email to the customer.
+// The contact form's messages go to the owner the same way (notifyContactMessage).
 //
 // There is NO database, so the email IS the order record. Every order is also
 // written to the server log as a fallback, and the owner alert is sent first and
@@ -64,7 +65,7 @@ function fullDeliveryAddress(a: NonNullable<OrderNotice["address"]>): string {
   return `${a.line1}${a.line2 ? `, ${a.line2}` : ""}, ${a.city}, ${a.state} ${a.zip}`;
 }
 
-// Public base URL (e.g. https://particularnotions.com). Email clients can only
+// Public base URL (e.g. https://www.megans-sourdough.com). Email clients can only
 // load images from an absolute, public URL — so we show the real logo when this
 // is set and fall back to a styled text wordmark otherwise (e.g. local dev).
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/+$/, "");
@@ -72,10 +73,10 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/+$/, "");
 function brandMark(): string {
   if (SITE_URL) {
     return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr><td style="background-color:${C.white};border-radius:14px;padding:10px 16px;">
-      <img src="${SITE_URL}/logo.jpg" alt="Particular Notions" width="180" style="display:block;width:180px;max-width:100%;height:auto;border:0;" />
+      <img src="${SITE_URL}/logo-megans-sourdough.jpg" alt="Megan&rsquo;s Sourdough" width="180" style="display:block;width:180px;max-width:100%;height:auto;border:0;" />
     </td></tr></table>`;
   }
-  return `<div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;letter-spacing:0.5px;color:${C.white};">Particular <span style="color:${C.goldSoft};">Notions</span></div>`;
+  return `<div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;letter-spacing:0.5px;color:${C.white};">Megan&rsquo;s <span style="color:${C.goldSoft};">Sourdough</span></div>`;
 }
 
 // ---- Shared branded HTML shell (table-based for email-client compatibility) ----
@@ -91,7 +92,7 @@ function shell(preheader: string, contentHtml: string): string {
         </td></tr>
         <tr><td style="padding:32px;font-family:Arial,Helvetica,sans-serif;color:${C.charcoal};line-height:1.5;">${contentHtml}</td></tr>
         <tr><td style="background-color:${C.cream};padding:18px 32px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${C.textLight};border-top:1px solid ${C.border};">
-          Particular Notions · Fairview, MI<br/><span style="color:${C.gold};font-size:14px;">&#10022;</span>
+          Megan&rsquo;s Sourdough · Fairview, MI<br/><span style="color:${C.gold};font-size:14px;">&#10022;</span>
         </td></tr>
       </table>
     </td></tr>
@@ -159,7 +160,7 @@ async function sendEmail(opts: {
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         personalizations: [{ to: [{ email: opts.to }] }],
-        from: { email: from, name: "Particular Notions" },
+        from: { email: from, name: "Megan's Sourdough" },
         ...(opts.replyTo ? { reply_to: { email: opts.replyTo } } : {}),
         subject: opts.subject,
         headers: siteEmailHeaders(opts.kind),
@@ -217,7 +218,7 @@ async function sendCustomerConfirmation(n: OrderNotice): Promise<boolean> {
     whereText,
     n.note ? `\nYour note: ${n.note}` : ``,
     ``,
-    `— Particular Notions`,
+    `— Megan's Sourdough`,
   ].join("\n");
 
   const whereInner = isDelivery
@@ -236,12 +237,12 @@ async function sendCustomerConfirmation(n: OrderNotice): Promise<boolean> {
         ? `<p style="margin:16px 0 0;font-size:14px;color:${C.textLight};font-style:italic;">Your note: ${n.note}</p>`
         : ""
     }
-    <p style="margin:24px 0 0;font-size:14px;color:${C.textLight};">With love,<br/>Particular Notions</p>`;
+    <p style="margin:24px 0 0;font-size:14px;color:${C.textLight};">With love,<br/>Megan&rsquo;s Sourdough</p>`;
 
   return sendEmail({
     kind: "order_confirmation",
     to: n.customerEmail,
-    subject: `Your Particular Notions order #${n.orderId}`,
+    subject: `Your Megan's Sourdough order #${n.orderId}`,
     text,
     html: shell(`Order #${n.orderId} — ready ${n.scheduleLabel}`, content),
     replyTo: process.env.CUSTOMER_REPLY_TO_EMAIL,
@@ -325,4 +326,66 @@ export async function notifyNewOrder(n: OrderNotice): Promise<{ ownerAlerted: bo
   const ownerAlerted = await sendOwnerAlert(n);
   await sendCustomerConfirmation(n);
   return { ownerAlerted };
+}
+
+// ---- Contact form ----
+export type ContactMessage = {
+  name: string;
+  email: string;
+  phone?: string;
+  /** What the message is about (the form's topic list). */
+  topic: string;
+  message: string;
+};
+
+/** The visitor typed it, so it's escaped before going into the HTML email. */
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
+/**
+ * Email a visitor's contact form message to the owner (ORDER_ALERT_EMAIL), with
+ * the visitor as Reply-To so answering it reaches them. Returns true if
+ * SendGrid accepted it. Never throws.
+ */
+export async function notifyContactMessage(m: ContactMessage): Promise<boolean> {
+  console.log(`[contact] ${m.name} <${m.email}> (${m.topic})`);
+  const to = process.env.ORDER_ALERT_EMAIL;
+  if (!to) {
+    console.warn("[notify] ORDER_ALERT_EMAIL not set — skipping contact message.");
+    return false;
+  }
+
+  const text = [
+    `New message from ${m.name}`,
+    ``,
+    `Email: ${m.email}`,
+    ...(m.phone ? [`Phone: ${m.phone}`] : []),
+    `About: ${m.topic}`,
+    ``,
+    m.message,
+    ``,
+    `Reply to this email to answer ${m.name}.`,
+  ].join("\n");
+
+  const name = escapeHtml(m.name);
+  const email = escapeHtml(m.email);
+  const rows = `
+    <tr><td style="padding:3px 0;color:${C.textLight};width:70px;">Email</td><td style="padding:3px 0;"><a href="mailto:${email}" style="color:${C.sage};">${email}</a></td></tr>
+    ${m.phone ? `<tr><td style="padding:3px 0;color:${C.textLight};">Phone</td><td style="padding:3px 0;">${escapeHtml(m.phone)}</td></tr>` : ""}
+    <tr><td style="padding:3px 0;color:${C.textLight};">About</td><td style="padding:3px 0;">${escapeHtml(m.topic)}</td></tr>`;
+  const content = `
+    <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:${C.sage};margin:0 0 16px;">New message from ${name}</h1>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin-bottom:8px;">${rows}</table>
+    ${infoBox(escapeHtml(m.message).replace(/\n/g, "<br/>"))}
+    <p style="margin:20px 0 0;font-size:14px;color:${C.textLight};">Reply to this email to answer ${name}.</p>`;
+
+  return sendEmail({
+    kind: "contact_form",
+    to,
+    subject: `New message from ${m.name} — ${m.topic}`,
+    text,
+    html: shell(`New message from ${name}`, content),
+    replyTo: m.email,
+  });
 }

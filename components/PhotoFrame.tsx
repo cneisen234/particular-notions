@@ -1,7 +1,7 @@
 import React from 'react';
 
 /*
- * Branded photo frame for Particular Notions.
+ * Branded photo frame for Megan's Sourdough.
  * A cream mat with a double gold border, soft sage shadow, corner sparkles,
  * and a small sage sprig emblem at the top — all pulled from the logo motifs.
  */

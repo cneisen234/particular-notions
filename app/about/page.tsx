@@ -9,7 +9,7 @@ export default function About() {
       {/* Hero */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl text-center flex flex-col items-center">
-          <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Meet the Designer</h1>
+          <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Meet Megan</h1>
           <div className="divider-sparkle" />
         </div>
       </section>
@@ -17,88 +17,48 @@ export default function About() {
       {/* Bio */}
       <section className="section-padding" style={{ backgroundColor: 'var(--white)' }}>
         <div className="container mx-auto max-w-5xl">
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
               <div className="space-y-4 text-lg leading-relaxed" style={{ color: 'var(--text-light)' }}>
+                <p>Hi, I&apos;m Megan!</p>
                 <p>
-                  Hi, I&apos;m Megan!
+                  I love serving my community in simple ways, and baking is one of
+                  my favorites. Sharing a fresh loaf with a neighbor is about as
+                  simple and as good as it gets.
                 </p>
                 <p>
-                  I&apos;ve always been drawn to the beauty in simple things. There&apos;s a
-                  quiet kind of joy in sitting down with a handful of beads and a
-                  clasp and turning them into something small enough to carry, yet
-                  special enough to notice. For me, making these pieces is
-                  creative expression at its most honest — no rush, no rules, just
-                  the pleasure of putting colors and textures together until
-                  something feels right.
+                  I bake sourdough at home: sandwich loaves, scones and cookies,
+                  all made by hand in small batches.
+                </p>
+                <p>
+                  Everything is baked to order, so it&apos;s fresh when you pick it
+                  up or I drop it off.
                 </p>
               </div>
             </div>
             <div className="order-1 md:order-2 flex justify-center">
               <PhotoFrame className="w-full max-w-sm">
-                <Zoom src="/megan.webp" alt="Megan, maker of Particular Notions" className="block">
+                <Zoom src="/megan.webp" alt="Megan, the baker behind Megan’s Sourdough" className="block">
                   <Image
                     src="/megan.webp"
-                    alt="Megan, maker of Particular Notions"
+                    alt="Megan, the baker behind Megan’s Sourdough"
                     width={460}
                     height={560}
                     className="w-full h-auto object-cover"
                   />
                 </Zoom>
               </PhotoFrame>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="flex justify-center">
-              <PhotoFrame className="w-full max-w-sm">
-                <Zoom src="/display-stand.webp" alt="A display of handmade Particular Notions charms" className="block">
-                  <Image
-                    src="/display-stand.webp"
-                    alt="A display of handmade Particular Notions charms"
-                    width={460}
-                    height={560}
-                    className="w-full h-auto object-cover"
-                  />
-                </Zoom>
-              </PhotoFrame>
-            </div>
-            <div>
-              <h2 className="text-3xl mb-6" style={{ color: 'var(--charcoal)' }}>
-                Why &ldquo;Particular Notions&rdquo;
-              </h2>
-              <div className="space-y-4 text-lg leading-relaxed" style={{ color: 'var(--text-light)' }}>
-                <p>
-                  Being uniquely
-                  creative and individually expressive is something worth
-                  celebrating. Each piece I make starts as a small idea, a &ldquo;notion&rdquo; if you will, and I am intentional about the execution.
-                </p>
-                <p>
-                  Because each one is handmade, no two are ever quite the same.
-                  That&apos;s the whole point. When you pick one, you&apos;re choosing the
-                  one made just a little differently from all the rest.
-                </p>
-                <p>
-                  If you have something particular in mind, I&apos;d love to make it for
-                  you!
-                </p>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-
       {/* CTA */}
-      <section className="section-padding text-center" style={{ backgroundColor: 'var(--sage-deep)' }}>
+      <section className="section-padding text-center bakery-bg">
         <div className="container mx-auto max-w-2xl">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/gallery" className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1" style={{ backgroundColor: 'white', color: 'var(--sage-deep)', fontFamily: 'var(--font-quicksand), sans-serif' }}>
-              View Gallery
-            </Link>
-            <Link href="/contact" className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1" style={{ backgroundColor: 'var(--gold)', color: 'white', fontFamily: 'var(--font-quicksand), sans-serif' }}>
-              Contact Megan
-            </Link>
+            <Link href="/order" className="btn-primary">Order Online</Link>
+            <Link href="/contact" className="btn-gold">Contact Megan</Link>
           </div>
         </div>
       </section>

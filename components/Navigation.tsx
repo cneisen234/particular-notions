@@ -47,8 +47,8 @@ export default function Navigation({ links }: { links: NavLink[] }) {
             {/* Brand */}
             <Link href="/" className="flex items-center gap-3" onClick={() => setIsOpen(false)}>
               <Image
-                src="/logo.jpg"
-                alt="Particular Notions"
+                src="/logo-megans-sourdough.jpg"
+                alt="Megan’s Sourdough"
                 width={52}
                 height={52}
                 className="rounded-full object-cover"
@@ -59,7 +59,7 @@ export default function Navigation({ links }: { links: NavLink[] }) {
                 className="text-2xl leading-none"
                 style={{ fontFamily: 'var(--font-cormorant), serif', color: 'var(--sage-deep)' }}
               >
-                Particular <span style={{ color: 'var(--gold-deep)' }}>Notions</span>
+                Megan&rsquo;s <span style={{ color: 'var(--gold-deep)' }}>Sourdough</span>
               </span>
             </Link>
 
@@ -160,15 +160,15 @@ export default function Navigation({ links }: { links: NavLink[] }) {
             </ul>
           </nav>
 
-          {/* Bottom CTA + email */}
+          {/* Bottom CTA */}
           <div className="pt-8" style={{ borderTop: '1px solid rgba(231, 214, 173, 0.25)' }}>
             <Link
-              href="/contact"
+              href="/order"
               onClick={() => setIsOpen(false)}
               className="flex items-center justify-center w-full px-6 py-4 rounded-full font-semibold text-lg transition-all"
               style={{ backgroundColor: 'var(--cream)', color: 'var(--sage-deep)', fontFamily: 'var(--font-quicksand), sans-serif' }}
             >
-              Contact Me
+              Order Online
             </Link>
           </div>
         </div>

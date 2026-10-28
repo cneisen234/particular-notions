@@ -4,9 +4,9 @@ import Storefront from "@/components/order/Storefront";
 import { getShop } from "@/lib/shop";
 
 export const metadata: Metadata = {
-  title: "Order Online — Particular Notions",
+  title: "Order Online — Megan’s Sourdough",
   description:
-    "Order fresh sourdough and baked goods from Particular Notions for pickup or local delivery.",
+    "Order fresh sourdough and baked goods from Megan’s Sourdough for pickup or local delivery.",
 };
 
 // Products, prices and what's left today come from the database on every visit.

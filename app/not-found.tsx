@@ -2,7 +2,7 @@ import Link from "next/link";
 
 // Root 404 — shown for any unmatched URL and for notFound() calls. It renders
 // inside the root layout, so the site nav + footer frame it. The "0" of 404 is a
-// little beaded charm on a keyring, keeping it on-brand for Particular Notions.
+// little sourdough loaf, keeping it on-brand for Megan's Sourdough.
 export default function NotFound() {
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-20">
@@ -17,33 +17,33 @@ export default function NotFound() {
 
         <p className="eyebrow mb-4">Page not found</p>
 
-        {/* 4 · beaded charm · 4 */}
+        {/* 4 · sourdough loaf · 4 */}
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           <Four />
-          <Charm />
+          <Loaf />
           <Four />
         </div>
         <span className="sr-only">404 — page not found</span>
 
         <h1 className="mt-4 text-3xl md:text-4xl" style={{ color: "var(--charcoal)" }}>
-          This page lost its{" "}
+          This page didn&rsquo;t{" "}
           <span className="italic" style={{ color: "var(--gold-deep)" }}>
-            charm
+            rise
           </span>
           .
         </h1>
         <div className="divider-sparkle mx-auto my-5" />
         <p className="text-lg" style={{ color: "var(--text-light)" }}>
           We couldn&rsquo;t find the page you were looking for — but there&rsquo;s
-          plenty more to see.
+          plenty more fresh from the oven.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/" className="btn-primary">
             Take me home
           </Link>
-          <Link href="/gallery" className="btn-gold">
-            Browse the Gallery
+          <Link href="/order" className="btn-gold">
+            Order Online
           </Link>
         </div>
       </div>
@@ -51,7 +51,7 @@ export default function NotFound() {
   );
 }
 
-// The oversized sage "4" flanking the charm, in the brand serif.
+// The oversized sage "4" flanking the loaf, in the brand serif.
 function Four() {
   return (
     <span
@@ -69,25 +69,34 @@ function Four() {
   );
 }
 
-// A little beaded charm on a keyring standing in for the "0" — gold ring with
-// sage + gold beads and a jump ring up top, straight from the logo motifs.
-function Charm() {
+// A sourdough boule standing in for the "0" — a domed golden crust with three
+// diagonal scores opening to the pale crumb, and a dusting of flour.
+function Loaf() {
   return (
     <svg
-      viewBox="0 0 64 96"
+      viewBox="6 12 84 72"
       aria-hidden
-      style={{ width: "clamp(54px, 16vw, 96px)", height: "auto", flexShrink: 0 }}
+      style={{ width: "clamp(70px, 20vw, 120px)", height: "auto", flexShrink: 0, marginTop: "0.18em" }}
     >
-      {/* jump ring / clasp */}
-      <circle cx="32" cy="13" r="6.5" fill="none" stroke="var(--gold-deep)" strokeWidth="3" />
-      <path d="M32 19 L32 30" stroke="var(--gold-deep)" strokeWidth="3" strokeLinecap="round" />
-      {/* main charm ring — the "0" */}
-      <circle cx="32" cy="60" r="23" fill="none" stroke="var(--gold)" strokeWidth="6" />
-      {/* beads seated on the ring */}
-      <circle cx="32" cy="37" r="4.5" fill="var(--sage)" />
-      <circle cx="55" cy="60" r="4.5" fill="var(--gold-deep)" />
-      <circle cx="32" cy="83" r="4.5" fill="var(--sage-deep)" />
-      <circle cx="9" cy="60" r="4.5" fill="var(--gold-soft)" />
+      {/* the boule — the "0" */}
+      <path
+        d="M9 62 C9 32, 28 14, 48 14 C68 14, 87 32, 87 62 C87 76, 72 82, 48 82 C24 82, 9 76, 9 62 Z"
+        fill="var(--gold)"
+        stroke="var(--gold-deep)"
+        strokeWidth="3"
+      />
+      {/* scores: a shadowed edge with the crumb showing through */}
+      {[0, 15, 30].map((dx) => (
+        <g key={dx} transform={`translate(${dx} 0)`}>
+          <path d="M23 62 Q 28 44, 39 31" fill="none" stroke="var(--gold-deep)" strokeWidth="6" strokeLinecap="round" />
+          <path d="M25 61 Q 30 44, 40 32" fill="none" stroke="var(--gold-soft)" strokeWidth="3" strokeLinecap="round" />
+        </g>
+      ))}
+      {/* flour dusting */}
+      <circle cx="33" cy="24" r="1.5" fill="var(--white)" />
+      <circle cx="58" cy="21" r="1.5" fill="var(--white)" />
+      <circle cx="74" cy="34" r="1.5" fill="var(--white)" />
+      <circle cx="18" cy="46" r="1.5" fill="var(--white)" />
     </svg>
   );
 }

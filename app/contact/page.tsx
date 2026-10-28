@@ -1,7 +1,14 @@
 import Link from 'next/link';
+import ContactForm from '@/components/ContactForm';
 import EmailAddress from '@/components/EmailAddress';
+import { joinList } from '@/lib/fulfillment';
+import { getShopConfig } from '@/lib/shop';
 
-export default function Contact() {
+// The pickup and delivery towns come from the shop's settings on every visit.
+export const dynamic = 'force-dynamic';
+
+export default async function Contact() {
+  const config = await getShopConfig();
   return (
     <main className="min-h-screen">
       {/* Hero */}
@@ -10,9 +17,22 @@ export default function Contact() {
           <h1 className="text-5xl mb-5" style={{ color: 'var(--sage-deep)' }}>Get in Touch</h1>
           <div className="divider-sparkle mb-6" />
           <p className="text-lg max-w-2xl" style={{ color: 'var(--text-light)' }}>
-            Questions, orders, custom ideas, or just a recommendation you&apos;d love to
-            see made — I read every message.
+            Questions about an order, pickup, or delivery — I read every
+            message.
           </p>
+        </div>
+      </section>
+
+      {/* Contact form */}
+      <section className="section-padding" style={{ backgroundColor: 'var(--white)', paddingBottom: 0 }}>
+        <div className="container mx-auto max-w-4xl">
+          <div className="relative bg-white rounded-2xl shadow-sm p-8 md:p-10" style={{ border: '1px solid var(--border)' }}>
+            <h2 className="text-3xl mb-2" style={{ color: 'var(--charcoal)' }}>Send a message</h2>
+            <p className="text-lg leading-relaxed mb-8" style={{ color: 'var(--text-light)' }}>
+              Ask about an order, pickup, or delivery, and I&apos;ll get back to you.
+            </p>
+            <ContactForm />
+          </div>
         </div>
       </section>
 
@@ -28,8 +48,8 @@ export default function Contact() {
             </div>
             <h2 className="text-3xl mb-3" style={{ color: 'var(--charcoal)' }}>Email</h2>
             <p className="text-lg leading-relaxed mb-6" style={{ color: 'var(--text-light)' }}>
-              The best way to reach me for orders, custom pieces, and
-              recommendations. Click below to copy the address.
+              The best way to reach me with questions about your order. Click
+              below to copy the address.
             </p>
             <div className="mt-auto">
               <EmailAddress variant="button" />
@@ -43,34 +63,25 @@ export default function Contact() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
               </svg>
             </div>
-            <h2 className="text-3xl mb-3" style={{ color: 'var(--charcoal)' }}>Find Me in Person</h2>
-            <p className="text-lg leading-relaxed" style={{ color: 'var(--text-light)' }}>
-              Particular Notions pops up at vendor shows and in shops around town,
-              where you can see the pieces up close and pick your favorite. Email
-              to ask where I will be next.
+            <h2 className="text-3xl mb-3" style={{ color: 'var(--charcoal)' }}>Pickup &amp; Delivery</h2>
+            <p className="text-lg leading-relaxed mb-6" style={{ color: 'var(--text-light)' }}>
+              Every order is baked fresh, then ready for pickup in {config.pickup.city} or
+              local delivery to {joinList(config.delivery.cities)}. Order online and
+              choose what works for you.
             </p>
+            <div className="mt-auto">
+              <Link href="/order" className="btn-primary">Order Online</Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Where to next */}
-      <section className="section-padding text-center" style={{ backgroundColor: 'var(--sage-deep)' }}>
+      <section className="section-padding text-center bakery-bg">
         <div className="container mx-auto max-w-2xl flex flex-col items-center">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/gallery"
-              className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
-              style={{ backgroundColor: 'white', color: 'var(--sage-deep)', fontFamily: 'var(--font-quicksand), sans-serif' }}
-            >
-              Browse the Gallery
-            </Link>
-            <Link
-              href="/about"
-              className="inline-block px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
-              style={{ backgroundColor: 'var(--gold)', color: 'white', fontFamily: 'var(--font-quicksand), sans-serif' }}
-            >
-              Meet Megan
-            </Link>
+            <Link href="/faq" className="btn-primary">Read the FAQ</Link>
+            <Link href="/about" className="btn-gold">Meet Megan</Link>
           </div>
         </div>
       </section>

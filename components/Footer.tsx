@@ -13,11 +13,11 @@ export default function Footer({ columns }: { columns: SiteFooterColumn[] }) {
               className="text-2xl mb-3"
               style={{ fontFamily: 'var(--font-cormorant), serif', color: 'var(--sage-deep)' }}
             >
-              Particular <span style={{ color: 'var(--gold-deep)' }}>Notions</span>
+              Megan&rsquo;s <span style={{ color: 'var(--gold-deep)' }}>Sourdough</span>
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--text-light)' }}>
-              Beaded charms, keychains, and little treasures — each one
-              made by hand. Uniquely creative, individually expressive.
+              Naturally leavened loaves and sourdough bakes — each one
+              made by hand and baked fresh to order.
             </p>
           </div>
 
@@ -46,15 +46,10 @@ export default function Footer({ columns }: { columns: SiteFooterColumn[] }) {
             </h4>
             <div className="space-y-3 text-sm" style={{ color: 'var(--text-light)' }}>
               <p>
-                For orders, custom pieces, and recommendations, reach out any time:
+                Questions about an order? Reach out any time:
               </p>
               <p>
                 <EmailAddress />
-              </p>
-              <p>
-                <Link href="/contact" className="transition-colors hover:underline" style={{ color: 'var(--text-light)' }}>
-                  Contact &amp; Custom Orders
-                </Link>
               </p>
             </div>
           </div>
@@ -64,7 +59,7 @@ export default function Footer({ columns }: { columns: SiteFooterColumn[] }) {
           className="pt-8 border-t text-center text-sm flex flex-col sm:flex-row sm:justify-between items-center gap-2"
           style={{ borderColor: 'var(--border)', color: 'var(--text-light)' }}
         >
-          <p>&copy; {new Date().getFullYear()} Particular Notions. Handmade with love by Megan.</p>
+          <p>&copy; {new Date().getFullYear()} Megan&rsquo;s Sourdough. Baked with love by Megan.</p>
           <p className="text-xs" style={{ color: 'var(--text-light)' }}>
             Website by{' '}
             <a

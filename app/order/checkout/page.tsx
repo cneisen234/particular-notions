@@ -4,7 +4,7 @@ import CheckoutForm from "@/components/order/CheckoutForm";
 import { getShop } from "@/lib/shop";
 
 export const metadata: Metadata = {
-  title: "Checkout — Particular Notions",
+  title: "Checkout — Megan’s Sourdough",
 };
 
 // The shop's settings and what's left today come from the database on every visit.

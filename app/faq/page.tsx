@@ -10,29 +10,24 @@ import type { ShopConfig } from '@/lib/shop-config';
 function faqs(config: ShopConfig): Faq[] {
   return [
     {
-      question: 'Are these really handmade?',
+      question: 'Is everything made by hand?',
       answer:
-        'Yes — every single one. I design and assemble each charm and keychain by hand, one bead at a time. Nothing is mass-produced.',
+        'Yes — every single bake. I mix, fold, shape and bake each order by hand in small batches. Nothing is mass-produced.',
     },
     {
-      question: 'Where can I buy your products?',
-      answer:
-        'Contact me for a list of locations where my items are currently displayed. You can also reach out to me to place a custom order.',
-    },
-    {
-      question: 'How do I order sourdough online?',
+      question: 'How do I order?',
       answer:
         `Head to the Order page, add what you’d like, and check out. Orders placed before the daily cutoff are ready the next day — pickup in ${config.pickup.city}, or local delivery to ${joinList(config.delivery.cities)}${config.freeDeliveryThresholdCents > 0 ? ` (free on orders ${formatCents(config.freeDeliveryThresholdCents).replace(/\.00$/, '')} and up)` : ''}. ${payWords(config)}`,
     },
     {
-      question: 'What can I clip these to?',
+      question: 'Why do loaves take an extra day?',
       answer:
-        'Anywhere you’d like a little personality — keys, a purse or backpack, a zipper pull, a water bottle, a diaper bag, a lanyard. Each charm has a sturdy clasp made for everyday use.',
+        'Sourdough can’t be rushed. Each loaf needs time to rise and develop flavor before it’s baked, so loaves are ready a day later than the other bakes.',
     },
     {
-      question: 'How do I get in touch?',
+      question: 'How should I store my bread?',
       answer:
-        'The best way is email. I read every message and am happy to answer questions, take orders, or chat about a custom idea. Head to the Contact page for details.',
+        'Keep it at room temperature in a bread bag or wrapped in a towel for a few days. For longer, slice it and freeze it — toast slices straight from the freezer.',
     },
   ];
 }

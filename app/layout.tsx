@@ -24,9 +24,9 @@ const nunito = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Particular Notions — Handmade Charms & Keychains by Megan",
+  title: "Megan’s Sourdough — Fresh Sourdough, Baked to Order",
   description:
-    "Particular Notions is a collection of handmade beaded charms, keychains, and little treasures — each one made with care by Megan. Uniquely creative, individually expressive.",
+    "Megan’s Sourdough bakes naturally leavened loaves, scones, and cookies by hand in small batches — made fresh to order for pickup or local delivery.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -38,9 +38,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const nav = await getSiteNav([
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },
-    { href: "/gallery", label: "Gallery", addon: "cms" },
     { href: "/order", label: "Order", addon: "ecommerce" },
     { href: "/faq", label: "FAQ" },
+    { href: "/contact", label: "Contact" },
   ]);
 
   return (

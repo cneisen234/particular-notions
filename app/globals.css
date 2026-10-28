@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Particular Notions brand colors, pulled from the logos */
+  /* Megan's Sourdough brand colors, pulled from the logos */
   --sage: #9cb5a3;          /* the fox / sprig sage */
   --sage-deep: #6f8c78;     /* darker sage for text + accents */
   --sage-soft: #cddccf;     /* pale sage wash */
@@ -58,17 +58,23 @@
   --font-body: var(--font-nunito);
 }
 
-body {
+/* Bakery pattern, softened by a translucent cream wash so it stays subtle. The
+   site's background, and also .bakery-bg for a panel on a plain section (the
+   home page's ordering box). Scrolls with the page (default attachment) and
+   tiles down the full height. */
+body,
+.bakery-bg {
   background-color: var(--cream);
-  /* Decorative sprig-and-star pattern, softened by a translucent cream wash so it
-     stays subtle. Scrolls with the page (default attachment) and tiles down the
-     full document height. */
   background-image:
-    linear-gradient(rgba(248, 244, 235, 0.70), rgba(248, 244, 235, 0.86)),
-    url('/background_graphic.webp');
+    linear-gradient(rgba(248, 244, 235, 0.45), rgba(248, 244, 235, 0.62)),
+    url('/bakeryBKG.webp');
   background-repeat: repeat;
-  background-size: 100% 100%, 760px auto;
+  /* Second value scales the bakery tile — larger = bigger bread motifs. */
+  background-size: 100% 100%, 1400px auto;
   background-position: top left, top center;
+}
+
+body {
   color: var(--charcoal);
   font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -149,19 +155,6 @@ button:not(:disabled),
   cursor: pointer;
 }
 
-/* Bakery-themed background for the online-ordering pages. Applied via
-   app/order/layout.tsx so it covers /order and /order/checkout, overriding the
-   default site background there. */
-.bakery-bg {
-  background:
-    linear-gradient(rgba(248, 244, 235, 0.45), rgba(248, 244, 235, 0.62)),
-    url('/bakeryBKG.webp');
-  background-repeat: repeat;
-  /* Second value scales the bakery tile — larger = bigger bread motifs. */
-  background-size: 100% 100%, 1400px auto;
-  background-position: top left, top center;
-}
-
 /* A soft decorative divider (little sage diamond, like the logo sparkles) */
 .divider-sparkle {
   width: 6rem;
@@ -194,17 +187,6 @@ button:not(:disabled),
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-in-up { animation: fadeInUp 0.5s ease both; }
-
-/* Hand-drawn underline that draws itself in (used on the CTA "particular?") */
-@keyframes drawUnderline {
-  from { stroke-dashoffset: 1; }
-  to { stroke-dashoffset: 0; }
-}
-.underline-draw {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: drawUnderline 0.9s ease 0.35s forwards;
-}
 
 /* Gentle fade-in used on hero content */
 @keyframes fadeUp {
