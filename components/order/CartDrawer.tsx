@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { formatCents } from "@/lib/money";
-import { useCart } from "./CartProvider";
+import { lineKey, useCart } from "./CartProvider";
 
 export default function CartDrawer() {
-  const { shop, enriched, count, subtotalCents, setQty, remove, isOpen, closeCart } = useCart();
+  const { shop, enriched, count, subtotalCents, setQty, remove, limitUsed, isOpen, closeCart } = useCart();
 
   return (
     <>
@@ -64,19 +64,20 @@ export default function CartDrawer() {
           ) : (
             <ul className="space-y-4">
               {enriched.map((item) => {
-                const atLimit = item.qty >= item.product.remaining;
+                // Another of this pack wouldn't fit in what's left of the day's limit.
+                const atLimit = limitUsed(item.productId) + item.option.limitUnits > item.product.remaining;
                 return (
                   <li
-                    key={item.productId}
+                    key={lineKey(item.productId, item.pack)}
                     className="flex gap-3 pb-4"
                     style={{ borderBottom: "1px solid var(--border)" }}
                   >
                     <div className="flex-1">
                       <p className="font-semibold" style={{ color: "var(--charcoal)" }}>
-                        {item.product.name}
+                        {item.name}
                       </p>
                       <p className="text-sm mb-2" style={{ color: "var(--text-light)" }}>
-                        {formatCents(item.product.priceCents)} each
+                        {formatCents(item.option.priceCents)} each
                       </p>
                       <div className="flex items-center gap-3">
                         <div
@@ -84,8 +85,8 @@ export default function CartDrawer() {
                           style={{ border: "1px solid var(--border)", backgroundColor: "var(--white)" }}
                         >
                           <button
-                            onClick={() => setQty(item.productId, item.qty - 1)}
-                            aria-label={`Remove one ${item.product.name}`}
+                            onClick={() => setQty(item.productId, item.pack, item.qty - 1)}
+                            aria-label={`Remove one ${item.name}`}
                             className="w-7 h-7 rounded-full flex items-center justify-center text-lg leading-none"
                             style={{ color: "var(--sage-deep)" }}
                           >
@@ -95,9 +96,9 @@ export default function CartDrawer() {
                             {item.qty}
                           </span>
                           <button
-                            onClick={() => setQty(item.productId, item.qty + 1)}
+                            onClick={() => setQty(item.productId, item.pack, item.qty + 1)}
                             disabled={atLimit}
-                            aria-label={`Add one ${item.product.name}`}
+                            aria-label={`Add one ${item.name}`}
                             className="w-7 h-7 rounded-full flex items-center justify-center text-lg leading-none"
                             style={{ color: atLimit ? "var(--border)" : "var(--sage-deep)", cursor: atLimit ? "not-allowed" : "pointer" }}
                           >
@@ -105,7 +106,7 @@ export default function CartDrawer() {
                           </button>
                         </div>
                         <button
-                          onClick={() => remove(item.productId)}
+                          onClick={() => remove(item.productId, item.pack)}
                           className="text-sm underline"
                           style={{ color: "var(--text-light)" }}
                         >

@@ -38,12 +38,12 @@ export async function getShopConfig(r: Reader = db): Promise<ShopConfig> {
   };
 }
 
-/** How many of each product are already ordered for each of these days. Keyed `${productId}|${YYYY-MM-DD}`. */
+/** How much of each product's daily limit is already ordered for each of these days. Keyed `${productId}|${YYYY-MM-DD}`. */
 export async function orderedOn(days: string[], r: Reader = db): Promise<Map<string, number>> {
   const out = new Map<string, number>();
   if (!days.length) return out;
   const rows = await r
-    .select({ productId: orderItems.productId, day: orders.fulfillmentDate, qty: sql<number>`sum(${orderItems.qty})::int` })
+    .select({ productId: orderItems.productId, day: orders.fulfillmentDate, qty: sql<number>`sum(coalesce(${orderItems.dailyLimitUsed}, ${orderItems.qty}))::int` })
     .from(orderItems)
     .innerJoin(orders, eq(orderItems.orderId, orders.id))
     .where(and(inArray(orders.fulfillmentDate, [...new Set(days)]), notInArray(orders.status, [...NOT_COUNTED])))
@@ -72,6 +72,9 @@ export async function getShop(now: Date = new Date(), r: Reader = db): Promise<S
     available: p.available,
     leadTimeHours: p.leadTimeHours,
     imageUrl: p.imageUrl,
+    packSize: p.packSize,
+    sixPackPriceCents: p.sixPackPriceCents,
+    twelvePackPriceCents: p.twelvePackPriceCents,
   }));
   return {
     config,

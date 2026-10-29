@@ -41,6 +41,12 @@ export const products = pgTable(
     // Advance notice in hours; null uses the shop's default.
     leadTimeHours: integer("lead_time_hours"),
     imageUrl: text("image_url"),
+    // How many come at the regular price (e.g. 2 cookies); null is one. The daily
+    // limit counts regular packs, so a 12-pack of a 2-cookie product takes 6.
+    packSize: integer("pack_size"),
+    // Prices for a 6- or 12-pack; null doesn't offer that size.
+    sixPackPriceCents: integer("six_pack_price_cents"),
+    twelvePackPriceCents: integer("twelve_pack_price_cents"),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -49,6 +55,9 @@ export const products = pgTable(
     index("products_category_idx").on(t.categoryId),
     check("products_price_nonnegative", sql`${t.priceCents} >= 0`),
     check("products_daily_limit_nonnegative", sql`${t.dailyLimit} >= 0`),
+    check("products_pack_size_positive", sql`${t.packSize} is null or ${t.packSize} > 0`),
+    check("products_six_pack_price_nonnegative", sql`${t.sixPackPriceCents} is null or ${t.sixPackPriceCents} >= 0`),
+    check("products_twelve_pack_price_nonnegative", sql`${t.twelvePackPriceCents} is null or ${t.twelvePackPriceCents} >= 0`),
   ],
 );
 
@@ -146,6 +155,11 @@ export const orderItems = pgTable(
     productName: text("product_name").notNull(),
     unitPriceCents: integer("unit_price_cents").notNull(),
     qty: integer("qty").notNull(),
+    // The 6- or 12-pack bought; null is the regular one.
+    packSize: integer("pack_size"),
+    // How much of the product's daily limit the line took (qty × its share per
+    // pack); null on lines from before packs, which took qty.
+    dailyLimitUsed: integer("daily_limit_used"),
     lineTotalCents: integer("line_total_cents").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

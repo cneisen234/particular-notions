@@ -11,7 +11,7 @@ import { db } from "@/lib/db";
 import { orderItems, orders, payments } from "@/lib/db/schema";
 import { square, locationId } from "@/lib/square";
 import { getShop, orderedOn } from "@/lib/shop";
-import { getProduct, isOrderable, type Shop } from "@/lib/inventory";
+import { asPackSize, getProduct, isOrderable, packOption, type Shop } from "@/lib/inventory";
 import { computeOrder, type CartLine } from "@/lib/pricing";
 import {
   validateDeliveryAddress,
@@ -81,6 +81,8 @@ export function validateOrder(shop: Shop, input: CheckoutInput, left: Map<string
 
   const problems: string[] = [];
   const soldOut: string[] = [];
+  // Each product's daily limit is shared by all its packs in the cart.
+  const used = new Map<string, number>();
 
   for (const line of input.lines) {
     const product = getProduct(shop, line.productId);
@@ -93,15 +95,24 @@ export function validateOrder(shop: Shop, input: CheckoutInput, left: Map<string
       problems.push(`Invalid quantity for ${product.name}.`);
       continue;
     }
-    const remaining = left.get(product.id) ?? 0;
-    if (!isOrderable(product) || remaining <= 0) {
-      problems.push(`${product.name} is sold out.`);
+    const option = packOption(product, asPackSize(line.pack));
+    if (!option || (line.pack != null && option.size === null)) {
+      problems.push(`${product.name} isn't sold in that size.`);
       soldOut.push(product.id);
       continue;
     }
-    if (line.qty > remaining) {
+    used.set(product.id, (used.get(product.id) ?? 0) + option.limitUnits * line.qty);
+  }
+
+  for (const [id, units] of used) {
+    const product = getProduct(shop, id)!;
+    const remaining = left.get(id) ?? 0;
+    if (!isOrderable(product) || remaining <= 0) {
+      problems.push(`${product.name} is sold out.`);
+      soldOut.push(id);
+    } else if (units > remaining) {
       problems.push(`Only ${remaining} of ${product.name} left for that day.`);
-      soldOut.push(product.id);
+      soldOut.push(id);
     }
   }
 
@@ -196,7 +207,16 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
       })
       .returning({ id: orders.id });
     await tx.insert(orderItems).values(
-      totals.lines.map((l) => ({ orderId: order.id, productId: l.productId, productName: l.name, unitPriceCents: l.unitPriceCents, qty: l.qty, lineTotalCents: l.lineTotalCents })),
+      totals.lines.map((l) => ({
+        orderId: order.id,
+        productId: l.productId,
+        productName: l.name,
+        unitPriceCents: l.unitPriceCents,
+        qty: l.qty,
+        packSize: l.pack,
+        dailyLimitUsed: l.limitUnits,
+        lineTotalCents: l.lineTotalCents,
+      })),
     );
     const [payment] = await tx
       .insert(payments)

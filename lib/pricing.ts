@@ -8,17 +8,22 @@
 //   • Card surcharge: cardSurchargeBps of (subtotal + delivery fee). Cash = none.
 //   • No sales tax.
 
-import { getProduct, type Shop } from "@/lib/inventory";
+import { asPackSize, getProduct, packName, packOption, type PackSize, type Shop } from "@/lib/inventory";
 import type { ShopConfig } from "@/lib/shop-config";
 import type { FulfillmentMethod, PaymentMethod } from "@/lib/fulfillment";
 
-export type CartLine = { productId: string; qty: number };
+/** `pack`: 6 or 12 for a bigger pack; omitted/null for the regular one. */
+export type CartLine = { productId: string; qty: number; pack?: PackSize | null };
 
 export type PricedLine = {
   productId: string;
+  /** The product's name with its pack, e.g. "Sugar Sourdough Cookies (12-Pack)". */
   name: string;
+  pack: PackSize | null;
   unitPriceCents: number;
   qty: number;
+  /** How much of the product's daily limit the line takes. */
+  limitUnits: number;
   lineTotalCents: number;
 };
 
@@ -51,9 +56,10 @@ export function cardSurchargeFor(config: ShopConfig, baseCents: number, payment:
 }
 
 /**
- * Price a cart. Unknown products and non-positive quantities are skipped here —
- * availability, daily limits, and the accepting-orders switch are enforced
- * separately at checkout; this function only does the money.
+ * Price a cart. Unknown products, packs a product isn't sold in, and
+ * non-positive quantities are skipped here — availability, daily limits, and the
+ * accepting-orders switch are enforced separately at checkout; this function
+ * only does the money.
  */
 export function computeOrder(
   shop: Shop,
@@ -68,16 +74,21 @@ export function computeOrder(
   for (const line of lines) {
     const product = getProduct(shop, line.productId);
     if (!product) continue;
+    const pack = asPackSize(line.pack);
+    const option = packOption(product, pack);
+    if (!option) continue;
     const qty = Math.floor(line.qty);
     if (!Number.isFinite(qty) || qty <= 0) continue;
-    const lineTotalCents = product.priceCents * qty;
+    const lineTotalCents = option.priceCents * qty;
     subtotalCents += lineTotalCents;
     itemCount += qty;
     priced.push({
       productId: product.id,
-      name: product.name,
-      unitPriceCents: product.priceCents,
+      name: packName(product, pack),
+      pack,
+      unitPriceCents: option.priceCents,
       qty,
+      limitUnits: option.limitUnits * qty,
       lineTotalCents,
     });
   }

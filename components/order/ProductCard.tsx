@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { isOrderable, type Product } from "@/lib/inventory";
+import { asPackSize, isOrderable, packName, packOptions, type PackSize, type Product } from "@/lib/inventory";
 import { formatCents } from "@/lib/money";
 import { useCart } from "./CartProvider";
 
@@ -52,10 +52,16 @@ function ProductImage({ product }: { product: Product }) {
 }
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { enriched, add, setQty } = useCart();
+  const { enriched, add, setQty, limitUsed } = useCart();
   const orderable = isOrderable(product);
-  const inCart = enriched.find((i) => i.productId === product.id)?.qty ?? 0;
-  const atLimit = inCart >= product.remaining;
+  // Products with a 6- or 12-pack price get a size dropdown; the rest sell as they are.
+  const options = packOptions(product);
+  const [pack, setPack] = useState<PackSize | null>(null);
+  const option = options.find((o) => o.size === pack) ?? options[0];
+  const inCart = enriched.find((i) => i.productId === product.id && i.pack === option.size)?.qty ?? 0;
+  // Another of this size wouldn't fit in what's left of the day's limit.
+  const atLimit = limitUsed(product.id) + option.limitUnits > product.remaining;
+  const name = packName(product, option.size);
 
   return (
     <div
@@ -82,12 +88,33 @@ export default function ProductCard({ product }: { product: Product }) {
           {product.description}
         </p>
 
+        {options.length > 1 && (
+          <label className="block mb-4">
+            <span className="block text-sm font-semibold mb-1" style={{ color: "var(--charcoal)" }}>
+              Size
+            </span>
+            <select
+              value={option.size ?? ""}
+              onChange={(e) => setPack(asPackSize(Number(e.target.value)))}
+              disabled={!orderable}
+              className="w-full rounded-lg px-3 py-2.5 text-base bg-white focus:outline-none"
+              style={{ border: "1px solid var(--border)", color: "var(--charcoal)" }}
+            >
+              {options.map((o) => (
+                <option key={o.label} value={o.size ?? ""}>
+                  {o.label} — {formatCents(o.priceCents)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         <div className="flex items-center justify-between mt-auto">
           <span
             className="text-lg font-semibold"
             style={{ fontFamily: "var(--font-quicksand), sans-serif", color: "var(--sage-deep)" }}
           >
-            {formatCents(product.priceCents)}
+            {formatCents(option.priceCents)}
           </span>
 
           {!orderable ? (
@@ -96,9 +123,10 @@ export default function ProductCard({ product }: { product: Product }) {
             </span>
           ) : inCart === 0 ? (
             <button
-              onClick={() => add(product.id)}
+              onClick={() => add(product.id, option.size)}
+              disabled={atLimit}
               className="btn-primary"
-              style={{ padding: "0.55rem 1.4rem", fontSize: "0.95rem" }}
+              style={{ padding: "0.55rem 1.4rem", fontSize: "0.95rem", opacity: atLimit ? 0.5 : 1, cursor: atLimit ? "not-allowed" : "pointer" }}
             >
               Add
             </button>
@@ -108,8 +136,8 @@ export default function ProductCard({ product }: { product: Product }) {
               style={{ border: "1px solid var(--border)", backgroundColor: "var(--cream)" }}
             >
               <button
-                onClick={() => setQty(product.id, inCart - 1)}
-                aria-label={`Remove one ${product.name}`}
+                onClick={() => setQty(product.id, option.size, inCart - 1)}
+                aria-label={`Remove one ${name}`}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-lg leading-none transition-colors"
                 style={{ color: "var(--sage-deep)" }}
               >
@@ -119,9 +147,9 @@ export default function ProductCard({ product }: { product: Product }) {
                 {inCart}
               </span>
               <button
-                onClick={() => add(product.id)}
+                onClick={() => add(product.id, option.size)}
                 disabled={atLimit}
-                aria-label={`Add one ${product.name}`}
+                aria-label={`Add one ${name}`}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-lg leading-none transition-colors"
                 style={{ color: atLimit ? "var(--border)" : "var(--sage-deep)", cursor: atLimit ? "not-allowed" : "pointer" }}
               >
@@ -133,7 +161,9 @@ export default function ProductCard({ product }: { product: Product }) {
 
         {orderable && atLimit && (
           <p className="text-xs mt-2 text-right" style={{ color: "var(--gold-deep)" }}>
-            That&apos;s all we have today
+            {product.remaining > limitUsed(product.id)
+              ? `Not enough left today for a ${option.label}`
+              : "That’s all we have today"}
           </p>
         )}
       </div>

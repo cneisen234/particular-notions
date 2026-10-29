@@ -1,10 +1,13 @@
 "use client";
 
-// Cart state for the storefront. Holds the raw {productId, qty} lines, persists
-// them to localStorage, and re-prices/re-validates against the shop the page
-// loaded from the database (so if an item sold out or its limit was lowered
+// Cart state for the storefront. Holds the raw {productId, pack, qty} lines,
+// persists them to localStorage, and re-prices/re-validates against the shop the
+// page loaded from the database (so if an item sold out or its limit was lowered
 // since the cart was saved, the cart self-corrects). Also hands that shop to the
 // storefront and checkout (useCart().shop).
+//
+// A product can be in the cart once per pack (its regular pack, a 6-pack, a
+// 12-pack); those lines share the product's daily limit.
 //
 // Also owns the cart-drawer open/close UI state so the floating cart button (and
 // the checkout link) can drive it.
@@ -18,13 +21,30 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getProduct, isOrderable, type Product, type Shop } from "@/lib/inventory";
+import {
+  asPackSize,
+  getProduct,
+  isOrderable,
+  packName,
+  packOption,
+  type PackOption,
+  type PackSize,
+  type Product,
+  type Shop,
+} from "@/lib/inventory";
 
 const STORAGE_KEY = "pn-cart-v1";
 
-export type CartItem = { productId: string; qty: number };
+/** `pack`: 6 or 12 for a bigger pack; null for the regular one. */
+export type CartItem = { productId: string; pack: PackSize | null; qty: number };
 
-export type EnrichedItem = CartItem & { product: Product; lineTotalCents: number };
+export type EnrichedItem = CartItem & {
+  product: Product;
+  option: PackOption;
+  /** The product's name with its pack, e.g. "Sugar Sourdough Cookies (12-Pack)". */
+  name: string;
+  lineTotalCents: number;
+};
 
 type CartContextValue = {
   /** The shop as loaded for this page (settings, catalog, what's left today). */
@@ -35,12 +55,14 @@ type CartContextValue = {
   /** Total quantity across all lines. */
   count: number;
   subtotalCents: number;
-  /** Add qty (default 1); clamped to what's left of the item's daily limit. */
-  add: (productId: string, qty?: number) => void;
-  /** Set an exact qty; 0 or less removes the line. Clamped to the daily limit. */
-  setQty: (productId: string, qty: number) => void;
-  remove: (productId: string) => void;
+  /** Add qty (default 1) of a pack; clamped to what's left of the item's daily limit. */
+  add: (productId: string, pack: PackSize | null, qty?: number) => void;
+  /** Set an exact qty of a pack; 0 or less removes the line. Clamped to the daily limit. */
+  setQty: (productId: string, pack: PackSize | null, qty: number) => void;
+  remove: (productId: string, pack: PackSize | null) => void;
   clear: () => void;
+  /** How much of a product's daily limit the cart holds, across all its packs. */
+  limitUsed: (productId: string) => number;
   /** True once localStorage has been read (avoids SSR hydration mismatch). */
   hydrated: boolean;
   isOpen: boolean;
@@ -50,22 +72,59 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-/** Clamp a requested qty to [0, remaining] for an orderable product; else 0. */
-function clampQty(product: Product | undefined, qty: number): number {
-  if (!product || !isOrderable(product)) return 0;
-  const n = Math.floor(qty);
-  if (!Number.isFinite(n) || n <= 0) return 0;
-  return Math.min(n, product.remaining);
+/** A cart line's identity: the product and its pack. */
+export function lineKey(productId: string, pack: PackSize | null): string {
+  return `${productId}|${pack ?? ""}`;
 }
 
-/** Drop unknown/off items and clamp each qty to what's left. */
-function reconcile(shop: Shop, items: CartItem[]): CartItem[] {
+const sameLine = (i: CartItem, productId: string, pack: PackSize | null) => i.productId === productId && i.pack === pack;
+
+/** Daily limit taken by the cart's other lines of this product. */
+function usedByOthers(shop: Shop, items: CartItem[], productId: string, pack: PackSize | null): number {
+  const product = getProduct(shop, productId);
+  if (!product) return 0;
+  return items.reduce((n, i) => {
+    if (i.productId !== productId || i.pack === pack) return n;
+    return n + (packOption(product, i.pack)?.limitUnits ?? 0) * i.qty;
+  }, 0);
+}
+
+/**
+ * Clamp a requested qty of a pack to [0, what fits in what's left of the
+ * product's daily limit after the cart's other packs of it]; 0 if it can't be ordered.
+ */
+function clampQty(shop: Shop, items: CartItem[], productId: string, pack: PackSize | null, qty: number): number {
+  const product = getProduct(shop, productId);
+  if (!product || !isOrderable(product)) return 0;
+  const option = packOption(product, pack);
+  if (!option) return 0;
+  const n = Math.floor(qty);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  const room = product.remaining - usedByOthers(shop, items, productId, pack);
+  return Math.max(0, Math.min(n, Math.floor(room / option.limitUnits)));
+}
+
+/** Drop unknown/off items and packs no longer sold, and clamp each qty to what's left. */
+function reconcile(shop: Shop, items: unknown[]): CartItem[] {
   const out: CartItem[] = [];
-  for (const it of items) {
-    const qty = clampQty(getProduct(shop, it.productId), it.qty);
-    if (qty > 0) out.push({ productId: it.productId, qty });
+  for (const raw of items) {
+    const it = raw as Partial<CartItem>;
+    if (typeof it?.productId !== "string" || typeof it.qty !== "number") continue;
+    const pack = asPackSize(it.pack);
+    if (out.some((i) => sameLine(i, it.productId!, pack))) continue;
+    const qty = clampQty(shop, out, it.productId, pack, it.qty);
+    if (qty > 0) out.push({ productId: it.productId, pack, qty });
   }
   return out;
+}
+
+/** Set a line's qty in place (keeping line order), append it if new, or drop it at 0. */
+function withQty(items: CartItem[], productId: string, pack: PackSize | null, qty: number): CartItem[] {
+  if (qty <= 0) return items.filter((i) => !sameLine(i, productId, pack));
+  if (items.some((i) => sameLine(i, productId, pack))) {
+    return items.map((i) => (sameLine(i, productId, pack) ? { ...i, qty } : i));
+  }
+  return [...items, { productId, pack, qty }];
 }
 
 export function CartProvider({ shop, children }: { shop: Shop; children: ReactNode }) {
@@ -100,33 +159,21 @@ export function CartProvider({ shop, children }: { shop: Shop; children: ReactNo
     }
   }, [items, hydrated]);
 
-  const setQty = useCallback((productId: string, qty: number) => {
+  const setQty = useCallback((productId: string, pack: PackSize | null, qty: number) => {
+    setItems((prev) => withQty(prev, productId, pack, clampQty(shop, prev, productId, pack, qty)));
+  }, [shop]);
+
+  const add = useCallback((productId: string, pack: PackSize | null, qty = 1) => {
     setItems((prev) => {
-      const clamped = clampQty(getProduct(shop, productId), qty);
-      if (clamped <= 0) return prev.filter((i) => i.productId !== productId);
-      // Update in place to preserve the existing line order; append if new.
-      if (prev.some((i) => i.productId === productId)) {
-        return prev.map((i) => (i.productId === productId ? { ...i, qty: clamped } : i));
-      }
-      return [...prev, { productId, qty: clamped }];
+      const existing = prev.find((i) => sameLine(i, productId, pack))?.qty ?? 0;
+      const clamped = clampQty(shop, prev, productId, pack, existing + qty);
+      // Never shrink a line by adding to it.
+      return clamped <= existing ? prev : withQty(prev, productId, pack, clamped);
     });
   }, [shop]);
 
-  const add = useCallback((productId: string, qty = 1) => {
-    setItems((prev) => {
-      const existing = prev.find((i) => i.productId === productId);
-      const clamped = clampQty(getProduct(shop, productId), (existing?.qty ?? 0) + qty);
-      if (clamped <= 0) return prev;
-      // Update in place to preserve line order; append only when it's a new line.
-      if (existing) {
-        return prev.map((i) => (i.productId === productId ? { ...i, qty: clamped } : i));
-      }
-      return [...prev, { productId, qty: clamped }];
-    });
-  }, [shop]);
-
-  const remove = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const remove = useCallback((productId: string, pack: PackSize | null) => {
+    setItems((prev) => prev.filter((i) => !sameLine(i, productId, pack)));
   }, []);
 
   const clear = useCallback(() => setItems([]), []);
@@ -134,10 +181,17 @@ export function CartProvider({ shop, children }: { shop: Shop; children: ReactNo
   const enriched = useMemo<EnrichedItem[]>(() => {
     return items.flatMap((it) => {
       const product = getProduct(shop, it.productId);
-      if (!product) return [];
-      return [{ ...it, product, lineTotalCents: product.priceCents * it.qty }];
+      const option = product && packOption(product, it.pack);
+      if (!product || !option) return [];
+      return [{ ...it, product, option, name: packName(product, it.pack), lineTotalCents: option.priceCents * it.qty }];
     });
   }, [shop, items]);
+
+  const limitUsed = useCallback(
+    (productId: string) =>
+      enriched.reduce((n, i) => (i.productId === productId ? n + i.option.limitUnits * i.qty : n), 0),
+    [enriched],
+  );
 
   const count = useMemo(() => enriched.reduce((n, i) => n + i.qty, 0), [enriched]);
   const subtotalCents = useMemo(
@@ -156,12 +210,13 @@ export function CartProvider({ shop, children }: { shop: Shop; children: ReactNo
       setQty,
       remove,
       clear,
+      limitUsed,
       hydrated,
       isOpen,
       openCart: () => setIsOpen(true),
       closeCart: () => setIsOpen(false),
     }),
-    [shop, items, enriched, count, subtotalCents, add, setQty, remove, clear, hydrated, isOpen],
+    [shop, items, enriched, count, subtotalCents, add, setQty, remove, clear, limitUsed, hydrated, isOpen],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

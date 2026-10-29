@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useCart } from "./CartProvider";
+import { lineKey, useCart } from "./CartProvider";
 import { formatCents } from "@/lib/money";
 import { computeOrder } from "@/lib/pricing";
 import {
@@ -126,7 +126,7 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
   const isCard = payment === "card";
 
   const lines = useMemo(
-    () => enriched.map((i) => ({ productId: i.productId, qty: i.qty })),
+    () => enriched.map((i) => ({ productId: i.productId, pack: i.pack, qty: i.qty })),
     [enriched],
   );
   const totals = useMemo(() => computeOrder(shop, lines, method, payment), [shop, lines, method, payment]);
@@ -486,9 +486,9 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
               </h2>
               <ul className="space-y-2 mb-4">
                 {enriched.map((i) => (
-                  <li key={i.productId} className="flex justify-between text-sm">
+                  <li key={lineKey(i.productId, i.pack)} className="flex justify-between text-sm">
                     <span style={{ color: "var(--charcoal)" }}>
-                      {i.qty} × {i.product.name}
+                      {i.qty} × {i.name}
                     </span>
                     <span style={{ color: "var(--charcoal)" }}>{formatCents(i.lineTotalCents)}</span>
                   </li>
