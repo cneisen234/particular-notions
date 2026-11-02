@@ -54,7 +54,7 @@ function ProductImage({ product }: { product: Product }) {
 export default function ProductCard({ product }: { product: Product }) {
   const { enriched, add, setQty, limitUsed } = useCart();
   const orderable = isOrderable(product);
-  // Products with a 6- or 12-pack price get a size dropdown; the rest sell as they are.
+  // Products with a pack price get a size dropdown; the rest sell as they are.
   const options = packOptions(product);
   const [pack, setPack] = useState<PackSize | null>(null);
   const option = options.find((o) => o.size === pack) ?? options[0];

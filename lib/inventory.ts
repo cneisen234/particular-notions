@@ -7,10 +7,10 @@
 // the product's next day, and 0 means sold out. `available: false` turns an item
 // off regardless of its limit (e.g. a temporary pause).
 //
-// PACKS: a product with a 6- or 12-pack price can also be bought in that size
-// (e.g. cookies: 2 for the regular price, or a 6- or 12-pack). The daily limit
-// counts regular packs, so each bigger pack takes its share (a 12-pack of a
-// 2-cookie product takes 6).
+// PACKS: a product with a 2-, 4-, 6- or 12-pack price can also be bought in that
+// size (e.g. cookies: 2 for the regular price, or a 6- or 12-pack; bread: one
+// loaf, or a 2-pack). The daily limit counts regular packs, so each bigger pack
+// takes its share (a 12-pack of a 2-cookie product takes 6, a 2-pack of bread 2).
 
 import type { ShopConfig } from "@/lib/shop-config";
 
@@ -41,7 +41,9 @@ export type Product = {
   imageUrl: string | null;
   /** How many come at the regular price (e.g. 2 cookies); null is one. */
   packSize: number | null;
-  /** 6- and 12-pack prices in integer cents; null doesn't offer that size. */
+  /** 2-, 4-, 6- and 12-pack prices in integer cents; null doesn't offer that size. */
+  twoPackPriceCents: number | null;
+  fourPackPriceCents: number | null;
   sixPackPriceCents: number | null;
   twelvePackPriceCents: number | null;
 };
@@ -70,10 +72,10 @@ export function getProduct(shop: Shop, id: string): Product | undefined {
 // ---- Packs ----
 
 /** The bigger packs a product can also be sold in, when it has a price for them. */
-export const PACK_SIZES = [6, 12] as const;
+export const PACK_SIZES = [2, 4, 6, 12] as const;
 export type PackSize = (typeof PACK_SIZES)[number];
 
-/** One way to buy a product: its regular pack (`size` null) or a 6- or 12-pack. */
+/** One way to buy a product: its regular pack (`size` null) or a 2-, 4-, 6- or 12-pack. */
 export type PackOption = {
   size: PackSize | null;
   /** e.g. "2-Pack", "12-Pack". */
@@ -83,7 +85,7 @@ export type PackOption = {
   limitUnits: number;
 };
 
-/** A cart line's pack as sent by the browser: 6 or 12, anything else is the regular one. */
+/** A cart line's pack as sent by the browser: 2, 4, 6 or 12, anything else is the regular one. */
 export function asPackSize(v: unknown): PackSize | null {
   return PACK_SIZES.find((s) => s === v) ?? null;
 }
@@ -94,7 +96,12 @@ export function packOptions(p: Product): PackOption[] {
   const options: PackOption[] = [
     { size: null, label: p.packSize ? `${p.packSize}-Pack` : "Single", priceCents: p.priceCents, limitUnits: 1 },
   ];
-  const prices: Record<PackSize, number | null> = { 6: p.sixPackPriceCents, 12: p.twelvePackPriceCents };
+  const prices: Record<PackSize, number | null> = {
+    2: p.twoPackPriceCents,
+    4: p.fourPackPriceCents,
+    6: p.sixPackPriceCents,
+    12: p.twelvePackPriceCents,
+  };
   for (const size of PACK_SIZES) {
     const priceCents = prices[size];
     if (priceCents === null || size <= regular) continue;
@@ -110,7 +117,7 @@ export function packOption(p: Product, size: PackSize | null): PackOption | unde
 
 /**
  * The product's name for a cart line or an order item: as it is for the regular
- * pack; for a 6- or 12-pack, its "(2-Pack)" ending becomes "(12-Pack)", or
+ * pack; for a bigger pack, its "(2-Pack)" ending becomes "(12-Pack)", or
  * "(12-Pack)" is added when the name has none.
  */
 export function packName(p: Product, size: PackSize | null): string {

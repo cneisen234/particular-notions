@@ -6,7 +6,7 @@
 // since the cart was saved, the cart self-corrects). Also hands that shop to the
 // storefront and checkout (useCart().shop).
 //
-// A product can be in the cart once per pack (its regular pack, a 6-pack, a
+// A product can be in the cart once per pack (its regular pack, a 2-, 4-, 6- or
 // 12-pack); those lines share the product's daily limit.
 //
 // Also owns the cart-drawer open/close UI state so the floating cart button (and

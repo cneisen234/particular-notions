@@ -44,7 +44,9 @@ export const products = pgTable(
     // How many come at the regular price (e.g. 2 cookies); null is one. The daily
     // limit counts regular packs, so a 12-pack of a 2-cookie product takes 6.
     packSize: integer("pack_size"),
-    // Prices for a 6- or 12-pack; null doesn't offer that size.
+    // Prices for a 2-, 4-, 6- or 12-pack; null doesn't offer that size.
+    twoPackPriceCents: integer("two_pack_price_cents"),
+    fourPackPriceCents: integer("four_pack_price_cents"),
     sixPackPriceCents: integer("six_pack_price_cents"),
     twelvePackPriceCents: integer("twelve_pack_price_cents"),
     sortOrder: integer("sort_order").notNull().default(0),
@@ -56,6 +58,8 @@ export const products = pgTable(
     check("products_price_nonnegative", sql`${t.priceCents} >= 0`),
     check("products_daily_limit_nonnegative", sql`${t.dailyLimit} >= 0`),
     check("products_pack_size_positive", sql`${t.packSize} is null or ${t.packSize} > 0`),
+    check("products_two_pack_price_nonnegative", sql`${t.twoPackPriceCents} is null or ${t.twoPackPriceCents} >= 0`),
+    check("products_four_pack_price_nonnegative", sql`${t.fourPackPriceCents} is null or ${t.fourPackPriceCents} >= 0`),
     check("products_six_pack_price_nonnegative", sql`${t.sixPackPriceCents} is null or ${t.sixPackPriceCents} >= 0`),
     check("products_twelve_pack_price_nonnegative", sql`${t.twelvePackPriceCents} is null or ${t.twelvePackPriceCents} >= 0`),
   ],
@@ -155,7 +159,7 @@ export const orderItems = pgTable(
     productName: text("product_name").notNull(),
     unitPriceCents: integer("unit_price_cents").notNull(),
     qty: integer("qty").notNull(),
-    // The 6- or 12-pack bought; null is the regular one.
+    // The 2-, 4-, 6- or 12-pack bought; null is the regular one.
     packSize: integer("pack_size"),
     // How much of the product's daily limit the line took (qty × its share per
     // pack); null on lines from before packs, which took qty.

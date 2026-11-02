@@ -73,6 +73,8 @@ export async function getShop(now: Date = new Date(), r: Reader = db): Promise<S
     leadTimeHours: p.leadTimeHours,
     imageUrl: p.imageUrl,
     packSize: p.packSize,
+    twoPackPriceCents: p.twoPackPriceCents,
+    fourPackPriceCents: p.fourPackPriceCents,
     sixPackPriceCents: p.sixPackPriceCents,
     twelvePackPriceCents: p.twelvePackPriceCents,
   }));
