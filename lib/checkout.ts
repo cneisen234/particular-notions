@@ -24,6 +24,7 @@ import {
   type PaymentMethod,
 } from "@/lib/fulfillment";
 import { notifyNewOrder } from "@/lib/notifications";
+import { notifyChange } from "@/lib/pilot-light";
 
 export type Customer = { name: string; email: string; phone?: string; note?: string };
 export type DeliveryAddress = {
@@ -254,6 +255,13 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
       .catch((err) => console.error("[checkout] couldn't record the card payment:", err));
   }
 
+  // Tell Pilot Light about every order, cash included. The order's own rows are
+  // already in ops.events (the change triggers), but Pilot Light only looks when
+  // nudged, and nothing else nudges it for a cash order. Never fails checkout.
+  const pinged = notifyChange({ type: "order.placed", ref: { table: "orders", id: saved.orderId }, key: `order:${saved.orderId}` }).catch((err) =>
+    console.error("[checkout] Couldn't tell Pilot Light about the order:", err),
+  );
+
   // Notifications (email) — best-effort, never throw. Order is already placed.
   await notifyNewOrder({
     orderId: shortId,
@@ -279,6 +287,7 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
     console.error("[checkout] notifyNewOrder threw unexpectedly:", err);
     return { ownerAlerted: false };
   });
+  await pinged;
 
   return {
     orderId: shortId,
