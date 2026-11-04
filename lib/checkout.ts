@@ -12,7 +12,8 @@ import { orderItems, orders, payments } from "@/lib/db/schema";
 import { square, locationId } from "@/lib/square";
 import { getShop, orderedOn } from "@/lib/shop";
 import { asPackSize, getProduct, isOrderable, packOption, type Shop } from "@/lib/inventory";
-import { computeOrder, type CartLine } from "@/lib/pricing";
+import { computeOrder, normalizeCode, type CartLine } from "@/lib/pricing";
+import { couponForCode } from "@/lib/coupons";
 import {
   validateDeliveryAddress,
   fulfillmentSchedule,
@@ -43,6 +44,8 @@ export type CheckoutInput = {
   address?: DeliveryAddress;
   /** Square card token (required for card payments). */
   sourceId?: string;
+  /** A coupon code the customer entered, if any. */
+  couponCode?: string;
 };
 
 /** Validation failure the client can act on (paused / sold out / bad fields). */
@@ -150,6 +153,8 @@ export type PlacedOrder = {
   method: FulfillmentMethod;
   payment: PaymentMethod;
   subtotalCents: number;
+  discountCents: number;
+  couponCode: string | null;
   deliveryFeeCents: number;
   cardSurchargeCents: number;
   totalCents: number;
@@ -181,8 +186,13 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
     const left = new Map(ordered.map((p) => [p.id, Math.max(0, p.dailyLimit - (counts.get(`${p.id}|${day}`) ?? 0))]));
     validateOrder(shop, input, left);
 
+    // A code they entered must still be good: never charge them without the discount they saw.
+    const entered = normalizeCode(typeof input.couponCode === "string" ? input.couponCode : "");
+    const coupon = await couponForCode(entered, tx);
+    if (entered && !coupon) throw new OrderError(["That coupon code isn't valid anymore. Remove it to place your order."]);
+
     // Authoritative totals from the shop — client money is ignored.
-    const totals = computeOrder(shop, input.lines, input.method, input.payment);
+    const totals = computeOrder(shop, input.lines, input.method, input.payment, coupon);
     if (totals.totalCents <= 0) throw new OrderError(["Order total is invalid."]);
 
     const address = input.method === "delivery" ? input.address! : undefined;
@@ -202,6 +212,8 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
         state: address?.state.trim().toUpperCase() ?? null,
         zip: address?.zip.trim() ?? null,
         subtotalCents: totals.subtotalCents,
+        discountCents: totals.discountCents,
+        couponCode: totals.couponCode,
         deliveryFeeCents: totals.deliveryFeeCents,
         cardSurchargeCents: totals.cardSurchargeCents,
         totalCents: totals.totalCents,
@@ -278,6 +290,8 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
       lineTotalCents: l.lineTotalCents,
     })),
     subtotalCents: saved.totals.subtotalCents,
+    discountCents: saved.totals.discountCents,
+    couponCode: saved.totals.couponCode,
     deliveryFeeCents: saved.totals.deliveryFeeCents,
     cardSurchargeCents: saved.totals.cardSurchargeCents,
     totalCents: saved.totals.totalCents,
@@ -294,6 +308,8 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
     method: input.method,
     payment: input.payment,
     subtotalCents: saved.totals.subtotalCents,
+    discountCents: saved.totals.discountCents,
+    couponCode: saved.totals.couponCode,
     deliveryFeeCents: saved.totals.deliveryFeeCents,
     cardSurchargeCents: saved.totals.cardSurchargeCents,
     totalCents: saved.totals.totalCents,

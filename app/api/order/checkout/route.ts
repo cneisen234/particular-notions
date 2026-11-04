@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       customer: body.customer,
       address: body.address,
       sourceId: body.sourceId,
+      couponCode: body.couponCode,
     });
     return Response.json({ ok: true, ...order });
   } catch (err) {

@@ -12,7 +12,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { lineKey, useCart } from "./CartProvider";
 import { formatCents } from "@/lib/money";
-import { computeOrder } from "@/lib/pricing";
+import { computeOrder, normalizeCode, type CouponMatch } from "@/lib/pricing";
 import {
   availableFulfillmentMethods,
   availablePaymentMethods,
@@ -107,6 +107,9 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [note, setNote] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  // What the shop said about the code typed (checked as they type, like Soady Poppers).
+  const [couponCheck, setCouponCheck] = useState<{ code: string; coupon: CouponMatch | null } | null>(null);
 
   const [line1, setLine1] = useState("");
   const [line2, setLine2] = useState("");
@@ -129,7 +132,33 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
     () => enriched.map((i) => ({ productId: i.productId, pack: i.pack, qty: i.qty })),
     [enriched],
   );
-  const totals = useMemo(() => computeOrder(shop, lines, method, payment), [shop, lines, method, payment]);
+  const couponCode = normalizeCode(couponInput);
+  const coupon = couponCheck && couponCheck.code === couponCode ? couponCheck.coupon : null;
+  const couponInvalid = Boolean(couponCode) && couponCheck?.code === couponCode && !couponCheck.coupon;
+  const totals = useMemo(() => computeOrder(shop, lines, method, payment, coupon), [shop, lines, method, payment, coupon]);
+
+  // Check the code with the shop, debounced so typing doesn't fire a request per keystroke. Only the
+  // code matters here (the money is worked out above), so other re-renders never cancel the check.
+  useEffect(() => {
+    if (!couponCode) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      fetch("/api/order/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lines: [], couponCode }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (!cancelled && d.ok) setCouponCheck({ code: couponCode, coupon: d.coupon ?? null });
+        })
+        .catch(() => {});
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [couponCode]);
   const schedule = useMemo(
     () => fulfillmentSchedule(shopConfig, new Date(), orderLeadTimeHours(shopConfig, enriched.map((i) => i.product))),
     [shopConfig, enriched],
@@ -159,8 +188,9 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
     }
     if (isCard && !cardConfigured)
       p.push("Card payments aren't configured yet — choose cash, or add Square keys.");
+    if (couponInvalid) p.push("That coupon code isn't valid. Remove it to place your order.");
     return p;
-  }, [shopConfig, name, email, isDelivery, line1, city, zip, isCard, cardConfigured]);
+  }, [shopConfig, name, email, isDelivery, line1, city, zip, isCard, cardConfigured, couponInvalid]);
 
   const canSubmit = count > 0 && problems.length === 0;
 
@@ -246,6 +276,7 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
           customer: { name, email, phone, note },
           address: isDelivery ? { line1, line2, city, state: shopConfig.delivery.state, zip } : undefined,
           sourceId,
+          couponCode: couponCode || undefined,
           recaptchaToken,
         }),
       });
@@ -495,8 +526,35 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
                 ))}
               </ul>
 
+              <div className="py-4" style={{ borderTop: "1px solid var(--border)" }}>
+                <Field label="Have a coupon code?">
+                  <input
+                    className={`${inputBase} uppercase`}
+                    style={inputStyle}
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    placeholder="Enter code"
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                  />
+                </Field>
+                {coupon && (
+                  <p className="mt-1.5 text-sm font-semibold" style={{ color: "var(--sage-deep)" }}>
+                    Code {coupon.code} applied 🎉
+                  </p>
+                )}
+                {couponInvalid && (
+                  <p className="mt-1.5 text-sm font-semibold" style={{ color: "#b3261e" }}>
+                    That code isn&apos;t valid.
+                  </p>
+                )}
+              </div>
+
               <div className="space-y-1.5 py-4" style={{ borderTop: "1px solid var(--border)" }}>
                 <Row label="Subtotal" value={formatCents(totals.subtotalCents)} />
+                {totals.discountCents > 0 && (
+                  <Row label={`Coupon (${totals.couponCode})`} value={`-${formatCents(totals.discountCents)}`} />
+                )}
                 {isDelivery && (
                   <Row
                     label="Delivery fee"

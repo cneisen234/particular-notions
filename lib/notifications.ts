@@ -27,6 +27,9 @@ export type OrderNotice = {
   address?: { line1: string; line2?: string; city: string; state: string; zip: string };
   lines: { name: string; qty: number; lineTotalCents: number }[];
   subtotalCents: number;
+  /** The coupon's amount off the products, and its code. */
+  discountCents?: number;
+  couponCode?: string | null;
   deliveryFeeCents: number;
   cardSurchargeCents: number;
   totalCents: number;
@@ -121,6 +124,7 @@ function totalsTable(n: OrderNotice): string {
       }${opts?.accent ? `color:${C.sage};` : ""}white-space:nowrap;">${value}</td>
     </tr>`;
   const rows = [row("Subtotal", formatCents(n.subtotalCents))];
+  if (n.discountCents) rows.push(row(`Coupon (${escapeHtml(n.couponCode ?? "")})`, `-${formatCents(n.discountCents)}`));
   if (n.deliveryFeeCents > 0) rows.push(row("Delivery fee", formatCents(n.deliveryFeeCents)));
   if (n.cardSurchargeCents > 0) rows.push(row("Card fee", formatCents(n.cardSurchargeCents)));
   rows.push(row("Total", formatCents(n.totalCents), { bold: true, accent: true }));
@@ -187,6 +191,7 @@ function lineRowsText(n: OrderNotice): string {
 
 function totalsText(n: OrderNotice): string {
   const rows = [`Subtotal: ${formatCents(n.subtotalCents)}`];
+  if (n.discountCents) rows.push(`Coupon (${n.couponCode}): -${formatCents(n.discountCents)}`);
   if (n.deliveryFeeCents > 0) rows.push(`Delivery fee: ${formatCents(n.deliveryFeeCents)}`);
   if (n.cardSurchargeCents > 0) rows.push(`Card fee: ${formatCents(n.cardSurchargeCents)}`);
   rows.push(`Total: ${formatCents(n.totalCents)}`);

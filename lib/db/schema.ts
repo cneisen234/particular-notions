@@ -133,6 +133,9 @@ export const orders = pgTable(
     state: text("state"),
     zip: text("zip"),
     subtotalCents: integer("subtotal_cents").notNull(),
+    // The coupon's amount off the products, and its code, as they were when ordered.
+    discountCents: integer("discount_cents").notNull().default(0),
+    couponCode: text("coupon_code"),
     deliveryFeeCents: integer("delivery_fee_cents").notNull().default(0),
     cardSurchargeCents: integer("card_surcharge_cents").notNull().default(0),
     totalCents: integer("total_cents").notNull(),
@@ -186,6 +189,32 @@ export const payments = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("payments_square_id_key").on(t.squarePaymentId), index("payments_order_idx").on(t.orderId)],
+);
+
+// ---- Coupons ----
+// Codes a customer types at checkout, as on Soady Poppers: a percentage or a
+// dollar amount off the products (never delivery). Stored uppercased and
+// matched case-insensitively; switch one off without deleting it.
+
+export const couponKind = pgEnum("coupon_kind", ["percent", "fixed"]);
+
+export const coupons = pgTable(
+  "coupons",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    code: text("code").notNull(),
+    // "percent" -> discountBps applies; "fixed" -> amountOffCents applies.
+    kind: couponKind("kind").notNull().default("percent"),
+    // Percent off in basis points (1600 = 16%). 0 for fixed coupons.
+    discountBps: integer("discount_bps").notNull().default(0),
+    // Dollar amount off, in cents. Used when kind = "fixed".
+    amountOffCents: integer("amount_off_cents"),
+    active: boolean("active").notNull().default(true),
+    label: text("label"), // optional note, e.g. the promotion's name
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("coupons_code_key").on(t.code)],
 );
 
 // ---- Gallery ----

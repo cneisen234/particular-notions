@@ -6,6 +6,9 @@
 //   • Delivery fee: flat, delivery orders only. Pickup is free. Waived when the
 //     subtotal reaches the free-delivery amount.
 //   • Card surcharge: cardSurchargeBps of (subtotal + delivery fee). Cash = none.
+//   • Coupon: a percentage or dollar amount off the products only (never the
+//     delivery fee), applied before the card surcharge. Free delivery still
+//     goes by the products' price before the coupon.
 //   • No sales tax.
 
 import { asPackSize, getProduct, packName, packOption, type PackSize, type Shop } from "@/lib/inventory";
@@ -27,8 +30,32 @@ export type PricedLine = {
   lineTotalCents: number;
 };
 
+/** An active coupon, as checkout matched it (lib/coupons.ts). */
+export type CouponMatch = {
+  code: string;
+  kind: "percent" | "fixed";
+  /** Percent off in basis points (kind = "percent"). */
+  bps: number;
+  /** Dollar amount off in cents (kind = "fixed"). */
+  amountCents: number;
+};
+
+/** A code the way it's matched: trimmed and uppercased. */
+export function normalizeCode(code?: string | null): string {
+  return (code ?? "").trim().toUpperCase();
+}
+
+/** A coupon's amount off the products' subtotal (never more than the subtotal). */
+export function couponDiscountFor(coupon: CouponMatch | null | undefined, subtotalCents: number): number {
+  if (!coupon) return 0;
+  const off = coupon.kind === "fixed" ? coupon.amountCents : Math.round((subtotalCents * coupon.bps) / 10000);
+  return Math.max(0, Math.min(subtotalCents, off));
+}
+
 export type OrderTotals = {
   subtotalCents: number;
+  /** The coupon's amount off the products. */
+  discountCents: number;
   deliveryFeeCents: number;
   cardSurchargeCents: number;
   totalCents: number;
@@ -37,6 +64,8 @@ export type OrderTotals = {
 export type PricedOrder = OrderTotals & {
   lines: PricedLine[];
   itemCount: number;
+  /** The code that gave the discount, or null. */
+  couponCode: string | null;
 };
 
 /**
@@ -66,6 +95,7 @@ export function computeOrder(
   lines: CartLine[],
   method: FulfillmentMethod,
   payment: PaymentMethod,
+  coupon: CouponMatch | null = null,
 ): PricedOrder {
   const priced: PricedLine[] = [];
   let subtotalCents = 0;
@@ -94,13 +124,16 @@ export function computeOrder(
   }
 
   const deliveryFeeCents = deliveryFeeFor(shop.config, method, subtotalCents);
-  const cardSurchargeCents = cardSurchargeFor(shop.config, subtotalCents + deliveryFeeCents, payment);
-  const totalCents = subtotalCents + deliveryFeeCents + cardSurchargeCents;
+  const discountCents = couponDiscountFor(coupon, subtotalCents);
+  const cardSurchargeCents = cardSurchargeFor(shop.config, subtotalCents - discountCents + deliveryFeeCents, payment);
+  const totalCents = subtotalCents - discountCents + deliveryFeeCents + cardSurchargeCents;
 
   return {
     lines: priced,
     itemCount,
     subtotalCents,
+    discountCents,
+    couponCode: discountCents > 0 ? coupon!.code : null,
     deliveryFeeCents,
     cardSurchargeCents,
     totalCents,
