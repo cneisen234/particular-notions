@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       payment: body.payment,
       customer: body.customer,
       address: body.address,
+      fulfillmentDate: body.fulfillmentDate,
       sourceId: body.sourceId,
       couponCode: body.couponCode,
     });

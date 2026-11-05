@@ -16,8 +16,9 @@ import { computeOrder, normalizeCode, type CartLine } from "@/lib/pricing";
 import { couponForCode } from "@/lib/coupons";
 import {
   validateDeliveryAddress,
-  fulfillmentSchedule,
-  isoDate,
+  bookingWindow,
+  dayLabel,
+  isIsoDay,
   orderLeadTimeHours,
   isFulfillmentMethodAvailable,
   isPaymentMethodAvailable,
@@ -42,6 +43,8 @@ export type CheckoutInput = {
   payment: PaymentMethod;
   customer: Customer;
   address?: DeliveryAddress;
+  /** The pickup/delivery day the customer chose (YYYY-MM-DD). */
+  fulfillmentDate?: string;
   /** Square card token (required for card payments). */
   sourceId?: string;
   /** A coupon code the customer entered, if any. */
@@ -72,9 +75,10 @@ export class PaymentError extends Error {
 
 /**
  * Re-check the cart against the shop, the kill switch, and what's left of each
- * item's daily limit for the order's day (`left`: productId → count left that day).
+ * item's daily limit for the order's day (`left`: productId → count left that day;
+ * `day`: that day's label, e.g. "Thursday, November 6").
  */
-export function validateOrder(shop: Shop, input: CheckoutInput, left: Map<string, number>): void {
+export function validateOrder(shop: Shop, input: CheckoutInput, left: Map<string, number>, day: string): void {
   const { config } = shop;
   if (!config.acceptingOrders) {
     throw new OrderError([config.pausedMessage], [], true);
@@ -111,11 +115,14 @@ export function validateOrder(shop: Shop, input: CheckoutInput, left: Map<string
   for (const [id, units] of used) {
     const product = getProduct(shop, id)!;
     const remaining = left.get(id) ?? 0;
-    if (!isOrderable(product) || remaining <= 0) {
+    if (!isOrderable(product)) {
       problems.push(`${product.name} is sold out.`);
       soldOut.push(id);
+    } else if (remaining <= 0) {
+      problems.push(`${product.name} is booked up for ${day}. Please pick another day.`);
+      soldOut.push(id);
     } else if (units > remaining) {
-      problems.push(`Only ${remaining} of ${product.name} left for that day.`);
+      problems.push(`Only ${remaining} of ${product.name} left for ${day}. Please pick another day or take fewer.`);
       soldOut.push(id);
     }
   }
@@ -166,6 +173,22 @@ function makeShortId(): string {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
+/**
+ * The customer's chosen day, if it's a real day inside the booking window. The
+ * first day can move while they're checking out (the cutoff passes), so a day
+ * that's now too early says which day is the earliest instead of moving theirs.
+ */
+function checkDay(chosen: unknown, window: ReturnType<typeof bookingWindow>): string {
+  if (!isIsoDay(chosen)) throw new OrderError(["Please choose a pickup or delivery day."]);
+  if (chosen < window.first) {
+    throw new OrderError([`${dayLabel(chosen)} is no longer available — the earliest day for this order is now ${window.earliest.label}. Please pick a new day.`]);
+  }
+  if (chosen > window.last) {
+    throw new OrderError([`We take orders up to ${dayLabel(window.last)}. Please pick an earlier day.`]);
+  }
+  return chosen;
+}
+
 /** One order saved at a time, so two orders can't both take the last of an item. */
 const ORDER_LOCK = 72_014_001;
 
@@ -179,12 +202,13 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
     await tx.execute(sql`select pg_advisory_xact_lock(${ORDER_LOCK})`);
     const shop = await getShop(now, tx);
     const ordered = (input.lines ?? []).map((l) => getProduct(shop, l.productId)).filter((p): p is NonNullable<typeof p> => Boolean(p));
-    // The order's day honors the longest lead time in the cart.
-    const schedule = fulfillmentSchedule(shop.config, now, orderLeadTimeHours(shop.config, ordered));
-    const day = isoDate(schedule.date);
+    // The customer's day must be inside the order's booking window, whose first
+    // day honors the longest lead time in the cart.
+    const day = checkDay(input.fulfillmentDate, bookingWindow(shop.config, now, orderLeadTimeHours(shop.config, ordered)));
+    const label = dayLabel(day);
     const counts = await orderedOn([day], tx);
     const left = new Map(ordered.map((p) => [p.id, Math.max(0, p.dailyLimit - (counts.get(`${p.id}|${day}`) ?? 0))]));
-    validateOrder(shop, input, left);
+    validateOrder(shop, input, left, label);
 
     // A code they entered must still be good: never charge them without the discount they saw.
     const entered = normalizeCode(typeof input.couponCode === "string" ? input.couponCode : "");
@@ -235,7 +259,7 @@ export async function placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
       .insert(payments)
       .values({ orderId: order.id, method: input.payment, status: "pending", amountCents: totals.totalCents })
       .returning({ id: payments.id });
-    return { orderId: order.id, paymentRowId: payment.id, totals, scheduleLabel: schedule.label, pickup: shop.config.pickup };
+    return { orderId: order.id, paymentRowId: payment.id, totals, scheduleLabel: label, pickup: shop.config.pickup };
   });
 
   let paymentId: string | undefined;

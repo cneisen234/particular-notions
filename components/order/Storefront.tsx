@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { catalogByCategory } from "@/lib/inventory";
-import { fulfillmentSchedule } from "@/lib/fulfillment";
+import { earliestFulfillment } from "@/lib/fulfillment";
 import { useCart } from "./CartProvider";
 import ProductCard from "./ProductCard";
 import CartDrawer from "./CartDrawer";
@@ -38,12 +38,12 @@ export default function Storefront() {
   const { shop } = useCart();
   const shopConfig = shop.config;
   const groups = catalogByCategory(shop);
-  // Compute the "ready" date in the browser after mount, not during render, so
+  // Compute the earliest day in the browser after mount, not during render, so
   // the server's render and the browser's agree (the date is the visitor's now).
   const [readyLabel, setReadyLabel] = useState<string | null>(null);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- compute date after mount so server and browser renders match
-    setReadyLabel(fulfillmentSchedule(shopConfig).label);
+    setReadyLabel(earliestFulfillment(shopConfig).label);
   }, [shopConfig]);
 
   if (!shopConfig.acceptingOrders) {
@@ -73,10 +73,10 @@ export default function Storefront() {
           </h1>
           <div className="divider-sparkle mb-6" />
           <p className="text-lg max-w-2xl" style={{ color: "var(--text-light)" }}>
-            Place an order today and it&apos;s ready{" "}
-            <strong>{readyLabel ?? "the next day"}</strong> for pickup or local
-            delivery — sourdough loaves need an extra day. Pay by card, or cash at
-            pickup/delivery.
+            Pick your pickup or local delivery day at checkout — order today and it
+            can be ready as soon as <strong>{readyLabel ?? "the next day"}</strong>.
+            Sourdough loaves need an extra day&apos;s notice. Pay by card, or cash
+            at pickup/delivery.
           </p>
         </div>
       </section>

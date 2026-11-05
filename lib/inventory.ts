@@ -3,8 +3,9 @@
 // both the storefront (browser) and the checkout (server) can use it.
 //
 // DAILY LIMIT: `dailyLimit` is how many can be ordered for each pickup/delivery
-// day. Saved orders count it down for their day; `remaining` is what's left for
-// the product's next day, and 0 means sold out. `available: false` turns an item
+// day. Saved orders count it down for their day (`Shop.booked`); customers pick
+// the day at checkout, so `remaining` is the most left on any one day they could
+// book, and 0 means every bookable day is full. `available: false` turns an item
 // off regardless of its limit (e.g. a temporary pause).
 //
 // PACKS: a product with a 2-, 4-, 6- or 12-pack price can also be bought in that
@@ -31,7 +32,7 @@ export type Product = {
   priceCents: number;
   /** How many can be ordered for each pickup/delivery day. */
   dailyLimit: number;
-  /** Left for this product's next pickup/delivery day (sold out at 0). */
+  /** The most left on any one bookable pickup/delivery day (sold out at 0). */
   remaining: number;
   /** False turns this item off regardless of its limit. */
   available: boolean;
@@ -55,6 +56,12 @@ export type Shop = {
   categories: Category[];
   /** In catalog order. */
   products: Product[];
+  /**
+   * How much of each product's daily limit saved orders already hold, for the
+   * days in the booking window. Keyed `${productId}|${YYYY-MM-DD}`; days with
+   * nothing booked are left out.
+   */
+  booked: Record<string, number>;
 };
 
 // ---- Helpers ----
@@ -67,6 +74,33 @@ export function isOrderable(p: Product): boolean {
 /** Look up a product by id (undefined if not found). */
 export function getProduct(shop: Shop, id: string): Product | undefined {
   return shop.products.find((p) => p.id === id);
+}
+
+/** What's left of a product's daily limit on one day (YYYY-MM-DD). */
+export function leftOn(booked: Shop["booked"], p: Pick<Product, "id" | "dailyLimit">, day: string): number {
+  return Math.max(0, p.dailyLimit - (booked[`${p.id}|${day}`] ?? 0));
+}
+
+/** How much of each product's daily limit a cart takes, across all its packs. */
+export function cartUnits(shop: Shop, lines: { productId: string; pack: unknown; qty: number }[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const l of lines) {
+    const product = getProduct(shop, l.productId);
+    const option = product && packOption(product, asPackSize(l.pack));
+    if (!option || !Number.isInteger(l.qty) || l.qty <= 0) continue;
+    out.set(l.productId, (out.get(l.productId) ?? 0) + option.limitUnits * l.qty);
+  }
+  return out;
+}
+
+/** Products in the cart that don't all fit in what's left on `day`. */
+export function shortOn(shop: Shop, units: Map<string, number>, day: string): Product[] {
+  const short: Product[] = [];
+  for (const [id, n] of units) {
+    const product = getProduct(shop, id);
+    if (product && n > leftOn(shop.booked, product, day)) short.push(product);
+  }
+  return short;
 }
 
 // ---- Packs ----

@@ -64,7 +64,7 @@ export default function CartDrawer() {
           ) : (
             <ul className="space-y-4">
               {enriched.map((item) => {
-                // Another of this pack wouldn't fit in what's left of the day's limit.
+                // Another of this pack wouldn't fit in the most left on any one day.
                 const atLimit = limitUsed(item.productId) + item.option.limitUnits > item.product.remaining;
                 return (
                   <li

@@ -59,7 +59,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const [pack, setPack] = useState<PackSize | null>(null);
   const option = options.find((o) => o.size === pack) ?? options[0];
   const inCart = enriched.find((i) => i.productId === product.id && i.pack === option.size)?.qty ?? 0;
-  // Another of this size wouldn't fit in what's left of the day's limit.
+  // Another of this size wouldn't fit in the most left on any one day.
   const atLimit = limitUsed(product.id) + option.limitUnits > product.remaining;
   const name = packName(product, option.size);
 
@@ -162,8 +162,8 @@ export default function ProductCard({ product }: { product: Product }) {
         {orderable && atLimit && (
           <p className="text-xs mt-2 text-right" style={{ color: "var(--gold-deep)" }}>
             {product.remaining > limitUsed(product.id)
-              ? `Not enough left today for a ${option.label}`
-              : "That’s all we have today"}
+              ? `Not enough left on any one day for a ${option.label}`
+              : "That’s the most we can bake for one day"}
           </p>
         )}
       </div>

@@ -17,12 +17,12 @@ function faqs(config: ShopConfig): Faq[] {
     {
       question: 'How do I order?',
       answer:
-        `Head to the Order page, add what you’d like, and check out. Orders placed before the daily cutoff are ready the next day — pickup in ${config.pickup.city}, or local delivery to ${joinList(config.delivery.cities)}${config.freeDeliveryThresholdCents > 0 ? ` (free on orders ${formatCents(config.freeDeliveryThresholdCents).replace(/\.00$/, '')} and up)` : ''}. ${payWords(config)}`,
+        `Head to the Order page, add what you’d like, and check out. You pick your day at checkout — order before the daily cutoff and it can be ready as soon as the next day, or book up to three months ahead. Pickup is in ${config.pickup.city}, or local delivery to ${joinList(config.delivery.cities)}${config.freeDeliveryThresholdCents > 0 ? ` (free on orders ${formatCents(config.freeDeliveryThresholdCents).replace(/\.00$/, '')} and up)` : ''}. ${payWords(config)}`,
     },
     {
       question: 'Why do loaves take an extra day?',
       answer:
-        'Sourdough can’t be rushed. Each loaf needs time to rise and develop flavor before it’s baked, so loaves are ready a day later than the other bakes.',
+        'Sourdough can’t be rushed. Each loaf needs time to rise and develop flavor before it’s baked, so loaves need a day more notice than the other bakes — checkout only offers days they can be ready.',
     },
     {
       question: 'How should I store my bread?',

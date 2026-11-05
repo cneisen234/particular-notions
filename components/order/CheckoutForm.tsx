@@ -8,17 +8,27 @@
 // and POST to /api/order/checkout, which recomputes money server-side, charges
 // (card) and emails. Cash orders skip tokenization and the charge.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { lineKey, useCart } from "./CartProvider";
+import DatePicker, { type DayStatus } from "./DatePicker";
 import { formatCents } from "@/lib/money";
 import { computeOrder, normalizeCode, type CouponMatch } from "@/lib/pricing";
+import { cartUnits, shortOn } from "@/lib/inventory";
 import {
+  addDays,
   availableFulfillmentMethods,
   availablePaymentMethods,
-  fulfillmentSchedule,
+  bookingWindow,
+  dayDate,
+  dayLabel,
+  BOOKING_WINDOW_DAYS,
   joinList,
   orderLeadTimeHours,
+  productLeadTimeHours,
+  shopToday,
+  shortDayLabel,
   validateDeliveryAddress,
   type FulfillmentMethod,
   type PaymentMethod,
@@ -73,6 +83,30 @@ type Placed = {
 const inputBase = "w-full rounded-lg px-3 py-2.5 text-base bg-white focus:outline-none";
 const inputStyle = { border: "1px solid var(--border)", color: "var(--charcoal)" } as const;
 
+/** "Thursday" for a YYYY-MM-DD day. */
+function weekdayOf(day: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "long" }).format(dayDate(day));
+}
+
+/** "November 6" for a YYYY-MM-DD day. */
+function monthDayOf(day: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "long", day: "numeric" }).format(dayDate(day));
+}
+
+/** "6 PM" for hour 18. */
+function hourLabel(hour: number): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", hour: "numeric" }).format(Date.UTC(2000, 0, 1, hour));
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+      <rect x="3" y="4.5" width="14" height="12.5" rx="2.5" />
+      <path d="M3 8.5h14M7 2.75v3.5M13 2.75v3.5" />
+    </svg>
+  );
+}
+
 function Field({
   label,
   children,
@@ -96,6 +130,7 @@ function Field({
 export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
   const { shop, enriched, count, hydrated, clear } = useCart();
   const shopConfig = shop.config;
+  const router = useRouter();
 
   const fulfillmentMethods = availableFulfillmentMethods();
   const paymentMethods = availablePaymentMethods(shopConfig);
@@ -159,10 +194,40 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
       clearTimeout(timer);
     };
   }, [couponCode]);
-  const schedule = useMemo(
-    () => fulfillmentSchedule(shopConfig, new Date(), orderLeadTimeHours(shopConfig, enriched.map((i) => i.product))),
-    [shopConfig, enriched],
+
+  // ---- Pickup/delivery day ----
+  // The clock ticks each minute so the earliest day moves on when the cutoff passes.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const leadHours = orderLeadTimeHours(shopConfig, enriched.map((i) => i.product));
+  const booking = useMemo(() => bookingWindow(shopConfig, now, leadHours), [shopConfig, now, leadHours]);
+  const today = shopToday(shopConfig, now);
+  const units = useMemo(() => cartUnits(shop, lines), [shop, lines]);
+  const dayStatus = useCallback(
+    (day: string): DayStatus =>
+      day < booking.first || day > booking.last ? "closed" : shortOn(shop, units, day).length ? "booked" : "available",
+    [shop, units, booking],
   );
+  const earliestOpen = useMemo(() => {
+    for (let d = booking.first; d <= booking.last; d = addDays(d, 1)) if (dayStatus(d) === "available") return d;
+    return null;
+  }, [booking, dayStatus]);
+  // What they tapped; the order's day is that while it can still take the cart,
+  // otherwise the earliest day that can (so there's always a sensible default).
+  const [pickedDay, setPickedDay] = useState<string | null>(null);
+  const day = pickedDay && dayStatus(pickedDay) === "available" ? pickedDay : earliestOpen;
+  const pickMoved = Boolean(pickedDay && day && pickedDay !== day);
+  // The item that sets the earliest day, when it needs more than the usual notice.
+  const slowest = useMemo(() => {
+    const extra = enriched
+      .map((i) => i.product)
+      .filter((p) => productLeadTimeHours(shopConfig, p) > shopConfig.defaultLeadTimeHours)
+      .sort((a, b) => productLeadTimeHours(shopConfig, b) - productLeadTimeHours(shopConfig, a));
+    return extra[0] ?? null;
+  }, [enriched, shopConfig]);
 
   const freeDelivery = totals.subtotalCents >= shopConfig.freeDeliveryThresholdCents;
   const remainingForFree = shopConfig.freeDeliveryThresholdCents - totals.subtotalCents;
@@ -189,8 +254,10 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
     if (isCard && !cardConfigured)
       p.push("Card payments aren't configured yet — choose cash, or add Square keys.");
     if (couponInvalid) p.push("That coupon code isn't valid. Remove it to place your order.");
+    if (!day)
+      p.push(`No day in our booking window has room for everything in your cart. Try fewer of an item.`);
     return p;
-  }, [shopConfig, name, email, isDelivery, line1, city, zip, isCard, cardConfigured, couponInvalid]);
+  }, [shopConfig, name, email, isDelivery, line1, city, zip, isCard, cardConfigured, couponInvalid, day]);
 
   const canSubmit = count > 0 && problems.length === 0;
 
@@ -275,6 +342,7 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
           payment,
           customer: { name, email, phone, note },
           address: isDelivery ? { line1, line2, city, state: shopConfig.delivery.state, zip } : undefined,
+          fulfillmentDate: day,
           sourceId,
           couponCode: couponCode || undefined,
           recaptchaToken,
@@ -283,6 +351,8 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
       const data = await res.json();
 
       if (!res.ok || !data.ok) {
+        // A day may have filled up since the page loaded: fetch fresh bookings so the calendar catches up.
+        if (res.status === 409) router.refresh();
         setServerError(
           data.paused
             ? data.message || "Online ordering is paused right now."
@@ -334,7 +404,7 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
             Order <strong>#{placed.orderId}</strong> — {formatCents(placed.totalCents)}
           </p>
           <p className="text-base mb-6" style={{ color: "var(--text-light)" }}>
-            {deliver ? "Local delivery" : "Pickup"} · ready <strong>{placed.scheduleLabel}</strong>.
+            {deliver ? "Local delivery" : "Pickup"} on <strong>{placed.scheduleLabel}</strong>.
             {placed.payment === "cash"
               ? ` Please have ${formatCents(placed.totalCents)} in cash ready.`
               : " Your card was charged."}{" "}
@@ -411,13 +481,8 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
                 ))}
               </div>
 
-              <p className="text-sm mt-4" style={{ color: "var(--text-light)" }}>
-                Ready <strong style={{ color: "var(--charcoal)" }}>{schedule.label}</strong>
-                {schedule.afterCutoff ? " (today's orders are past the cutoff)." : "."}
-              </p>
-
               {isDelivery && (
-                <p className="text-sm mt-2 font-semibold" style={{ color: "var(--sage-deep)" }}>
+                <p className="text-sm mt-4 font-semibold" style={{ color: "var(--sage-deep)" }}>
                   {freeDelivery
                     ? "🎉 You've qualified for free delivery!"
                     : `Add ${formatCents(remainingForFree)} more for free delivery (orders ${freeThresholdLabel}+).`}
@@ -485,6 +550,81 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
               )}
             </section>
 
+            {/* When */}
+            <section className="bg-white rounded-2xl p-6" style={{ border: "1px solid var(--border)" }} aria-labelledby="when-heading">
+              <h2 id="when-heading" className="text-2xl mb-1" style={{ color: "var(--charcoal)" }}>
+                When would you like it?
+              </h2>
+              <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
+                Pick any open day for your {isDelivery ? "delivery" : "pickup"}, up to {BOOKING_WINDOW_DAYS} days ahead.
+              </p>
+
+              <div className="grid gap-6 sm:grid-cols-[minmax(0,21rem)_1fr] sm:items-start">
+                <DatePicker
+                  value={day}
+                  onChange={setPickedDay}
+                  first={booking.first}
+                  last={booking.last}
+                  today={today}
+                  status={dayStatus}
+                  label={isDelivery ? "Delivery day" : "Pickup day"}
+                />
+
+                <div className="rounded-xl p-5" style={{ backgroundColor: "var(--cream)" }}>
+                  <p className="eyebrow mb-2">{isDelivery ? "Delivery" : "Pickup"} day</p>
+                  <div aria-live="polite">
+                    {day ? (
+                      <>
+                        <p className="text-3xl leading-tight" style={{ fontFamily: "var(--font-cormorant), Georgia, serif", color: "var(--charcoal)" }}>
+                          {weekdayOf(day)}
+                        </p>
+                        <p className="text-lg font-semibold" style={{ fontFamily: "var(--font-quicksand), sans-serif", color: "var(--sage-ink)" }}>
+                          {monthDayOf(day)}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-base font-semibold" style={{ color: "var(--charcoal)" }}>
+                        No open days for this cart
+                      </p>
+                    )}
+                    {pickMoved && day && (
+                      <p
+                        className="mt-3 text-sm rounded-lg px-3 py-2"
+                        style={{ color: "var(--charcoal)", backgroundColor: "var(--white)", borderLeft: "3px solid var(--gold)" }}
+                      >
+                        {shortDayLabel(pickedDay!)} isn&apos;t open for this order anymore, so we moved you to the next open day.
+                      </p>
+                    )}
+                  </div>
+
+                  <ul className="mt-4 space-y-1.5 text-sm" style={{ color: "var(--text-muted)" }}>
+                    <li>
+                      Earliest for this order: <strong style={{ color: "var(--charcoal)" }}>{shortDayLabel(booking.first)}</strong>
+                      {slowest
+                        ? ` — ${slowest.name} needs ${Math.round(productLeadTimeHours(shopConfig, slowest) / 24)} days' notice.`
+                        : "."}
+                    </li>
+                    <li>
+                      {booking.earliest.afterCutoff
+                        ? `It's past today's ${hourLabel(shopConfig.orderCutoffHour)} cutoff, so the earliest day is one later.`
+                        : `Today's cutoff is ${hourLabel(shopConfig.orderCutoffHour)} — after that, the earliest day moves back one.`}
+                    </li>
+                  </ul>
+
+                  {day && earliestOpen && day !== earliestOpen && (
+                    <button
+                      type="button"
+                      onClick={() => setPickedDay(earliestOpen)}
+                      className="cal-link mt-4 text-sm font-semibold underline underline-offset-2 rounded"
+                      style={{ color: "var(--sage-ink)" }}
+                    >
+                      Switch to the earliest day ({shortDayLabel(earliestOpen)})
+                    </button>
+                  )}
+                </div>
+              </div>
+            </section>
+
             {/* Contact */}
             <section className="bg-white rounded-2xl p-6" style={{ border: "1px solid var(--border)" }}>
               <h2 className="text-2xl mb-4" style={{ color: "var(--charcoal)" }}>
@@ -515,6 +655,14 @@ export default function CheckoutForm({ appId, locationId, squareEnv }: Props) {
               <h2 className="text-2xl mb-4" style={{ color: "var(--charcoal)" }}>
                 Order summary
               </h2>
+              {day && (
+                <p className="flex items-center gap-2 text-sm -mt-2 mb-4" style={{ color: "var(--charcoal)" }}>
+                  <span style={{ color: "var(--sage-ink)" }}>
+                    <CalendarIcon />
+                  </span>
+                  {isDelivery ? "Delivery" : "Pickup"} · {dayLabel(day)}
+                </p>
+              )}
               <ul className="space-y-2 mb-4">
                 {enriched.map((i) => (
                   <li key={lineKey(i.productId, i.pack)} className="flex justify-between text-sm">

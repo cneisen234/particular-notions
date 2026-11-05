@@ -155,6 +155,69 @@ button:not(:disabled),
   cursor: pointer;
 }
 
+/* Checkout date picker (components/order/DatePicker.tsx). Bookable days are a
+   soft sage chip (charcoal on it reads 9.9:1; sage text on it would be 4.3:1),
+   the chosen day is solid --sage-ink (white on it 4.7:1), booked-up days are
+   struck through, and days outside the booking window are muted. */
+.cal-day {
+  font-family: var(--font-quicksand), sans-serif;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.cal-day[data-status="available"] {
+  background-color: rgba(156, 181, 163, 0.18);
+  color: var(--charcoal);
+}
+.cal-day[data-status="available"]:hover {
+  background-color: rgba(156, 181, 163, 0.36);
+}
+.cal-day[data-selected],
+.cal-day[data-selected]:hover {
+  background-color: var(--sage-ink);
+  color: var(--white);
+  box-shadow: var(--shadow-button);
+}
+.cal-day[data-status="booked"] {
+  background-color: var(--cream);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-muted);
+  font-weight: 500;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+.cal-day[data-status="closed"] {
+  color: var(--text-light);
+  font-weight: 500;
+  opacity: 0.45;
+}
+.cal-today {
+  background-color: var(--gold-deep);
+}
+.cal-day[data-selected] .cal-today {
+  background-color: var(--white);
+}
+.cal-nav {
+  color: var(--charcoal);
+}
+.cal-nav:hover:not(:disabled) {
+  background-color: rgba(156, 181, 163, 0.18);
+}
+.cal-nav:disabled {
+  color: var(--border);
+}
+.cal-day:focus-visible,
+.cal-nav:focus-visible,
+.cal-link:focus-visible {
+  outline: 2px solid var(--sage-ink);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cal-day,
+  .cal-nav {
+    transition: none;
+  }
+}
+
 /* A soft decorative divider (little sage diamond, like the logo sparkles) */
 .divider-sparkle {
   width: 6rem;
